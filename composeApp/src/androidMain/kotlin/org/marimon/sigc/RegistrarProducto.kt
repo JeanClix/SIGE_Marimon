@@ -4,7 +4,15 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,114 +20,317 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import coil.compose.rememberAsyncImagePainter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegistrarProductoScreen() {
+fun RegistrarProductoScreen(onNavigateToHome: () -> Unit = {}) {
     var codigo by remember { mutableStateOf("") }
     var nombre by remember { mutableStateOf("") }
     var descripcion by remember { mutableStateOf("") }
     var especificaciones by remember { mutableStateOf("") }
     var precio by remember { mutableStateOf("") }
     var cantidad by remember { mutableStateOf("") }
-    var categoria by remember { mutableStateOf("") }
     var imagenUri by remember { mutableStateOf<Uri?>(null) }
-
     var errorMessage by remember { mutableStateOf("") }
     var registroExitoso by remember { mutableStateOf(false) }
 
-    // Lanzador para abrir la galería
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         imagenUri = uri
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Registrar Producto",
-            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-            color = Color.Red
-        )
-
-        // Campos de texto
-        OutlinedTextField(value = codigo, onValueChange = { codigo = it }, label = { Text("Código de Producto") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = nombre, onValueChange = { nombre = it }, label = { Text("Nombre del producto") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = descripcion, onValueChange = { descripcion = it }, label = { Text("Descripción") }, modifier = Modifier.fillMaxWidth(), maxLines = 2)
-        OutlinedTextField(value = especificaciones, onValueChange = { especificaciones = it }, label = { Text("Especificaciones") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = categoria, onValueChange = { categoria = it }, label = { Text("Categoría") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = precio, onValueChange = { precio = it }, label = { Text("Precio (S/)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-        OutlinedTextField(value = cantidad, onValueChange = { cantidad = it }, label = { Text("Cantidad") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-
-        // Botón para seleccionar imagen
-        Button(
-            onClick = { launcher.launch("image/*") },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
-        ) {
-            Text("Subir Imagen", color = Color.White)
-        }
-
-        // Mostrar imagen seleccionada
-        imagenUri?.let {
-            Image(
-                painter = rememberAsyncImagePainter(it),
-                contentDescription = "Imagen del producto",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp),
-                contentScale = ContentScale.Crop
-            )
-        }
-
-        // Mostrar error si existe
-        if (errorMessage.isNotEmpty()) {
-            Text(text = errorMessage, color = Color.Red, style = MaterialTheme.typography.bodyMedium)
-        }
-
-        // Botón Confirmar
-        Button(
-            onClick = {
-                if (codigo.isBlank() || nombre.isBlank() || descripcion.isBlank() ||
-                    especificaciones.isBlank() || categoria.isBlank() || precio.isBlank() || cantidad.isBlank()
-                ) {
-                    errorMessage = "⚠️ Todos los campos son obligatorios"
-                    registroExitoso = false
-                } else if (precio.toDoubleOrNull() == null || cantidad.toIntOrNull() == null) {
-                    errorMessage = "⚠️ Precio debe ser numérico y Cantidad un número entero"
-                    registroExitoso = false
-                } else {
-                    errorMessage = ""
-                    registroExitoso = true
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-        ) {
-            Text("Confirmar", color = Color.White)
-        }
-
-        // Mensaje de confirmación con diseño
-        if (registroExitoso) {
+    // Diálogo de éxito
+    if (registroExitoso) {
+        Dialog(onDismissRequest = { registroExitoso = false }) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.Black)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text("✅ Registro exitoso", color = Color.Red, style = MaterialTheme.typography.headlineSmall)
-                    Text("El producto $nombre fue registrado correctamente.", color = Color.White)
+                    // Ícono de check en círculo negro
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .background(Color.Black, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Éxito",
+                            tint = Color.White,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+
+                    // Texto de éxito
+                    Text(
+                        text = "¡Se registró exitosamente!",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Text(
+                        text = "El producto se ha registró correctamente",
+                        fontSize = 14.sp,
+                        color = Color.Gray,
+                        textAlign = TextAlign.Center
+                    )
+
+                    // Botón Salir
+                    Button(
+                        onClick = {
+                            registroExitoso = false
+                            onNavigateToHome()
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFFF5252)
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Salir", color = Color.White, fontSize = 16.sp)
+                    }
+                }
+            }
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+        // Header personalizado
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFFF5252))
+                .padding(vertical = 16.dp, horizontal = 8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { onNavigateToHome() }) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Volver",
+                        tint = Color.Black
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Registrar Producto",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+            }
+        }
+
+        // Contenido con scroll
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Campos de texto
+            OutlinedTextField(
+                value = codigo,
+                onValueChange = { codigo = it },
+                label = { Text("Código de Producto") },
+                placeholder = { Text("Ingresar Código", color = Color.Gray) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.Gray,
+                    unfocusedBorderColor = Color.LightGray
+                )
+            )
+
+            OutlinedTextField(
+                value = nombre,
+                onValueChange = { nombre = it },
+                label = { Text("Nombre del Producto") },
+                placeholder = { Text("Ingresar Nombre", color = Color.Gray) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.Gray,
+                    unfocusedBorderColor = Color.LightGray
+                )
+            )
+
+            OutlinedTextField(
+                value = descripcion,
+                onValueChange = { descripcion = it },
+                label = { Text("Descripción") },
+                placeholder = { Text("Ingresar Descripción", color = Color.Gray) },
+                modifier = Modifier.fillMaxWidth(),
+                maxLines = 3,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.Gray,
+                    unfocusedBorderColor = Color.LightGray
+                )
+            )
+
+            OutlinedTextField(
+                value = especificaciones,
+                onValueChange = { especificaciones = it },
+                label = { Text("Especificaciones") },
+                placeholder = { Text("Ingresar Especificaciones", color = Color.Gray) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.Gray,
+                    unfocusedBorderColor = Color.LightGray
+                )
+            )
+
+            // Sección de imagen
+            Text(text = "Imagen", fontSize = 14.sp, color = Color.Black)
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .background(Color.LightGray),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (imagenUri != null) {
+                        Image(
+                            painter = rememberAsyncImagePainter(imagenUri),
+                            contentDescription = "Imagen seleccionada",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text("📷", fontSize = 32.sp)
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Button(
+                    onClick = { launcher.launch("image/*") },
+                    modifier = Modifier.weight(1f).height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Text("Subir Imagen", color = Color.White, fontSize = 14.sp)
+                }
+            }
+
+            // Precio y Cantidad
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                OutlinedTextField(
+                    value = precio,
+                    onValueChange = { precio = it },
+                    label = { Text("Precio (S/)") },
+                    placeholder = { Text("Ingresar Precio", color = Color.Gray) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Gray,
+                        unfocusedBorderColor = Color.LightGray
+                    )
+                )
+
+                OutlinedTextField(
+                    value = cantidad,
+                    onValueChange = { cantidad = it },
+                    label = { Text("Cantidad") },
+                    placeholder = { Text("Ingresar Cantidad", color = Color.Gray) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Gray,
+                        unfocusedBorderColor = Color.LightGray
+                    )
+                )
+            }
+
+            if (errorMessage.isNotEmpty()) {
+                Text(
+                    text = errorMessage,
+                    color = Color.Red,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+            }
+
+            // Botones
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Button(
+                    onClick = {
+                        codigo = ""
+                        nombre = ""
+                        descripcion = ""
+                        especificaciones = ""
+                        precio = ""
+                        cantidad = ""
+                        imagenUri = null
+                        errorMessage = ""
+                    },
+                    modifier = Modifier.weight(1f).height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5252)),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Text("Cancelar", color = Color.White, fontSize = 16.sp)
+                }
+
+                Button(
+                    onClick = {
+                        when {
+                            codigo.isBlank() || nombre.isBlank() || descripcion.isBlank() ||
+                                    especificaciones.isBlank() || precio.isBlank() || cantidad.isBlank() -> {
+                                errorMessage = "⚠️ Todos los campos son obligatorios"
+                            }
+                            precio.toDoubleOrNull() == null -> {
+                                errorMessage = "⚠️ El precio debe ser un número válido"
+                            }
+                            cantidad.toIntOrNull() == null -> {
+                                errorMessage = "⚠️ La cantidad debe ser un número entero"
+                            }
+                            else -> {
+                                errorMessage = ""
+                                registroExitoso = true
+                            }
+                        }
+                    },
+                    modifier = Modifier.weight(1f).height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Text("Confirmar", color = Color.White, fontSize = 16.sp)
                 }
             }
         }
