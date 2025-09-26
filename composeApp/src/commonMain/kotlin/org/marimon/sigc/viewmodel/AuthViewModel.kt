@@ -15,7 +15,7 @@ class AuthViewModel : ViewModel() {
     
     private val authRepository = AuthRepository()
     
-    private val _authState = MutableStateFlow<AuthResult>(AuthResult.Loading)
+    private val _authState = MutableStateFlow<AuthResult>(AuthResult.Error(""))
     val authState: StateFlow<AuthResult> = _authState.asStateFlow()
     
     private val _isLoggedIn = MutableStateFlow(false)
@@ -51,7 +51,7 @@ class AuthViewModel : ViewModel() {
     
     fun clearError() {
         if (_authState.value is AuthResult.Error) {
-            _authState.value = AuthResult.Loading
+            _authState.value = AuthResult.Error("")
         }
     }
 }
