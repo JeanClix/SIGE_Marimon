@@ -31,7 +31,7 @@ fun LoginScreen(
     authViewModel: AuthViewModel,
     onLoginSuccess: () -> Unit
 ) {
-    var username by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     
@@ -107,17 +107,17 @@ fun LoginScreen(
                     modifier = Modifier.padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Campo de usuario
+                    // Campo de email
                     OutlinedTextField(
-                        value = username,
+                        value = email,
                         onValueChange = { 
-                            username = it
+                            email = it
                             authViewModel.clearError()
                         },
-                        label = { Text("Usuario") },
+                        label = { Text("Email") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = MaterialTheme.colorScheme.primary,
                             focusedLabelColor = MaterialTheme.colorScheme.primary
@@ -167,7 +167,7 @@ fun LoginScreen(
                     // Botón de login
                     Button(
                         onClick = {
-                            authViewModel.login(username, password)
+                            authViewModel.login(email, password)
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -210,18 +210,23 @@ fun LoginScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "Credenciales de prueba:",
+                        text = "Configuración de Supabase:",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                     Text(
-                        text = "Admin: usuario=admin, contraseña=admin123",
+                        text = "1. Configura tu URL y API Key en SupabaseConfig.kt",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                     Text(
-                        text = "Usuario: usuario=usuario, contraseña=user123",
+                        text = "2. Crea usuarios en tu panel de Supabase",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                    Text(
+                        text = "3. Usa email y contraseña para iniciar sesión",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
