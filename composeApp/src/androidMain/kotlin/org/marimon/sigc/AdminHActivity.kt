@@ -15,13 +15,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.graphics.ColorFilter
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            App()
+            AppAndroid()
         }
     }
 }
@@ -29,7 +30,7 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 fun AppAndroidPreview() {
-    App()
+    AppAndroid()
 }
 
 data class NavItem(val route: String, val iconRes: Int)
@@ -89,56 +90,118 @@ fun CustomBottomNavBar(
 }
 
 @Composable
-fun PanelAdministrativo() {
-    val items = listOf(
-        PanelItem("Registro de empleados", R.drawable.r_empleado),
-        PanelItem("Reporte de Ventas", R.drawable.r_ventas),
-        PanelItem("Reporte de Productos", R.drawable.r_producto),
-        PanelItem("Dashboard KPI", R.drawable.kpi)
-    )
-    Column(
+fun TopAdminBar() {
+    Surface(
+        color = Color(0xFFE53E3E),
+        shape = MaterialTheme.shapes.large.copy(
+            topStart = CornerSize(0.dp),
+            topEnd = CornerSize(0.dp),
+            bottomStart = CornerSize(32.dp),
+            bottomEnd = CornerSize(32.dp)
+        ),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .height(140.dp)
     ) {
-        Text(
-            text = "Panel Administrativo",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        for (row in 0..1) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                for (col in 0..1) {
-                    val item = items[row * 2 + col]
-                    val imageSize = if (item.label == "Registro de empleados") 80.dp else 58.dp
-                    Card(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(120.dp),
-                        elevation = CardDefaults.cardElevation(8.dp)
-                    ) {
-                        Column(
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp, vertical = 32.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Avatar circular
+                Surface(
+                    shape = CircleShape,
+                    color = Color.White,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.user),
+                        contentDescription = "Avatar",
+                        modifier = Modifier.size(44.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = "Hola!",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "Administrador",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White
+                    )
+                }
+            }
+        }
+    }
+}
+
+data class PanelItem(val label: String, val iconRes: Int)
+
+@Composable
+fun PanelAdministrativo() {
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+
+        TopAdminBar()
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Panel Administrativo",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            val items = listOf(
+                PanelItem("Registro de empleados", R.drawable.r_empleado),
+                PanelItem("Reporte de Ventas", R.drawable.r_ventas),
+                PanelItem("Reporte de Productos", R.drawable.r_producto),
+                PanelItem("Dashboard KPI", R.drawable.kpi)
+            )
+            for (row in 0..1) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    for (col in 0..1) {
+                        val item = items[row * 2 + col]
+                        val imageSize = if (item.label == "Registro de empleados") 80.dp else 58.dp
+                        Card(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .padding(8.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                                .weight(1f)
+                                .height(120.dp),
+                            elevation = CardDefaults.cardElevation(8.dp)
                         ) {
-                            Image(
-                                painter = painterResource(id = item.iconRes),
-                                contentDescription = null,
-                                modifier = Modifier.size(imageSize)
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = item.label,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Image(
+                                    painter = painterResource(id = item.iconRes),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(imageSize)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = item.label,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
                         }
                     }
                 }
@@ -147,11 +210,8 @@ fun PanelAdministrativo() {
     }
 }
 
-
-data class PanelItem(val label: String, val iconRes: Int)
-
 @Composable
-fun App() {
+fun AppAndroid() {
     Scaffold(
         bottomBar = {
             CustomBottomNavBar(
@@ -160,7 +220,11 @@ fun App() {
             )
         }
     ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = innerPadding.calculateBottomPadding())
+        ) {
             PanelAdministrativo()
         }
     }
