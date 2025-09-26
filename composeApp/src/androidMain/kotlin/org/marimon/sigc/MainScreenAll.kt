@@ -19,7 +19,7 @@ fun MainScreen() {
     Scaffold(
         bottomBar = {
             NavigationBar(
-                containerColor = Color.Black // Fondo de la barra en negro
+                containerColor = Color.Black
             ) {
                 NavigationBarItem(
                     selected = selectedTab == 0,
@@ -27,11 +27,11 @@ fun MainScreen() {
                     icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
                     label = { Text("Inicio") },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color.Red,     // Ícono rojo al seleccionar
-                        unselectedIconColor = Color.White, // Ícono blanco por defecto
-                        selectedTextColor = Color.Red,     // Texto rojo al seleccionar
-                        unselectedTextColor = Color.White, // Texto blanco por defecto
-                        indicatorColor = Color.Transparent // Sin burbuja de selección
+                        selectedIconColor = Color.Red,
+                        unselectedIconColor = Color.White,
+                        selectedTextColor = Color.Red,
+                        unselectedTextColor = Color.White,
+                        indicatorColor = Color.Transparent
                     )
                 )
                 NavigationBarItem(
@@ -70,7 +70,9 @@ fun MainScreen() {
         ) {
             when (selectedTab) {
                 0 -> HomeScreen()
-                1 -> RegistrarProductoScreen()
+                1 -> RegistrarProductoScreen(
+                    onNavigateToHome = { selectedTab = 0 }  // <-- ESTA ES LA LÍNEA CLAVE
+                )
                 2 -> AjustesScreen()
             }
         }
