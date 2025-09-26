@@ -1,16 +1,15 @@
 package org.marimon.sigc.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsStateWithLifecycle
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.marimon.sigc.ui.screens.HomeScreen
 import org.marimon.sigc.ui.screens.LoginScreen
 import org.marimon.sigc.viewmodel.AuthViewModel
 
 @Composable
 fun AppNavigation(authViewModel: AuthViewModel) {
-    val isLoggedIn by authViewModel.isLoggedIn.collectAsStateWithLifecycle()
+    val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
     
     if (isLoggedIn) {
         HomeScreen(

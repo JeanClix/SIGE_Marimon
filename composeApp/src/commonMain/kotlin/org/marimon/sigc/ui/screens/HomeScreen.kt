@@ -3,10 +3,6 @@ package org.marimon.sigc.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.collectAsState
 import org.marimon.sigc.data.model.User
 import org.marimon.sigc.viewmodel.AuthViewModel
 
@@ -24,7 +20,7 @@ fun HomeScreen(
     authViewModel: AuthViewModel,
     onLogout: () -> Unit
 ) {
-    val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
+    val currentUser by authViewModel.currentUser.collectAsState()
     
     Scaffold(
         topBar = {
@@ -37,14 +33,11 @@ fun HomeScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = { 
+                    TextButton(onClick = { 
                         authViewModel.logout()
                         onLogout()
                     }) {
-                        Icon(
-                            imageVector = Icons.Default.ExitToApp,
-                            contentDescription = "Cerrar Sesión"
-                        )
+                        Text("Cerrar Sesión")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -80,7 +73,7 @@ fun HomeScreen(
                 MenuItemCard(
                     title = menuItem.title,
                     description = menuItem.description,
-                    icon = menuItem.icon,
+                    emoji = menuItem.emoji,
                     onClick = { /* TODO: Implementar navegación */ }
                 )
             }
@@ -101,11 +94,10 @@ fun UserInfoCard(user: User?) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = "Usuario",
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.onSecondaryContainer
+            Text(
+                text = "👤",
+                style = MaterialTheme.typography.headlineLarge,
+                modifier = Modifier.size(48.dp)
             )
             
             Spacer(modifier = Modifier.width(16.dp))
@@ -136,7 +128,7 @@ fun UserInfoCard(user: User?) {
 fun MenuItemCard(
     title: String,
     description: String,
-    icon: ImageVector,
+    emoji: String,
     onClick: () -> Unit
 ) {
     Card(
@@ -148,11 +140,10 @@ fun MenuItemCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                modifier = Modifier.size(32.dp),
-                tint = MaterialTheme.colorScheme.primary
+            Text(
+                text = emoji,
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.size(32.dp)
             )
             
             Spacer(modifier = Modifier.width(16.dp))
@@ -176,7 +167,7 @@ fun MenuItemCard(
 data class MenuItem(
     val title: String,
     val description: String,
-    val icon: ImageVector
+    val emoji: String
 )
 
 fun getMenuItems(): List<MenuItem> {
@@ -184,12 +175,12 @@ fun getMenuItems(): List<MenuItem> {
         MenuItem(
             title = "Gestión de Empleados",
             description = "Administrar información de empleados",
-            icon = Icons.Default.Person
+            emoji = "👥"
         ),
         MenuItem(
             title = "Configuración",
             description = "Configurar parámetros del sistema",
-            icon = Icons.Default.Settings
+            emoji = "⚙️"
         )
     )
 }
