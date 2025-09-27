@@ -27,7 +27,7 @@ import org.marimon.sigc.viewmodel.AuthViewModel
 import java.util.Calendar
 
 // Colores
-private val RedPure = Color(0xFFFF0000) // Rojo puro (¡El color deseado para el botón activo!)
+private val RedPure = Color(0xFFFF0000) // Rojo puro
 private val BackgroundDark = Color(0xFF000000) // Fondo negro
 private val CardBackground = Color(0xFFFFFFFF) // Tarjeta blanca
 private val TextPrimary = Color(0xFF000000) // Texto negro
@@ -77,6 +77,7 @@ fun LoginScreenAndroid(
     authViewModel: AuthViewModel,
     onLoginResult: (Boolean) -> Unit
 ) {
+    // CAMBIO 1: Inicializar los estados como cadenas vacías para que el placeholder funcione correctamente.
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
@@ -154,6 +155,7 @@ fun LoginScreenAndroid(
                         OutlinedTextField(
                             value = email,
                             onValueChange = { email = it },
+                            // El texto "ventas@marimon.com" permanece como placeholder
                             placeholder = { Text("ventas@marimon.com", color = TextSecondary.copy(alpha = 0.7f)) },
                             singleLine = true,
                             shape = RoundedCornerShape(8.dp),
@@ -182,6 +184,7 @@ fun LoginScreenAndroid(
                         OutlinedTextField(
                             value = password,
                             onValueChange = { password = it },
+                            // El texto "********" permanece como placeholder
                             placeholder = { Text("********", color = TextSecondary.copy(alpha = 0.7f)) },
                             trailingIcon = {
                                 TextButton(
@@ -271,10 +274,8 @@ fun LoginScreenAndroid(
                             .height(48.dp),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(
-                            // CAMBIO CLAVE AQUÍ: Aseguramos que el botón activo sea ROJO PURO
                             containerColor = RedPure,
                             contentColor = Color.White,
-                            // El estado deshabilitado mantiene la opacidad baja (0.4f)
                             disabledContainerColor = RedPure.copy(alpha = 0.4f),
                             disabledContentColor = Color.White.copy(alpha = 0.8f)
                         )
