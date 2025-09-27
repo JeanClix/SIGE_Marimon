@@ -22,6 +22,7 @@ fun AppNavigation(authViewModel: AuthViewModel) {
         // Redirigir según el rol del usuario
         when (currentUser?.role) {
             UserRole.ADMIN -> {
+                println("DEBUG: AppNavigation - Redirigiendo a HomeScreen (ADMIN)")
                 HomeScreen(
                     authViewModel = authViewModel,
                     onLogout = {
@@ -30,6 +31,7 @@ fun AppNavigation(authViewModel: AuthViewModel) {
                 )
             }
             UserRole.EMPLOYEE -> {
+                println("DEBUG: AppNavigation - Redirigiendo a EmployeeScreen (EMPLOYEE)")
                 EmployeeScreen(
                     authViewModel = authViewModel,
                     onLogout = {
@@ -38,6 +40,7 @@ fun AppNavigation(authViewModel: AuthViewModel) {
                 )
             }
             null -> {
+                println("DEBUG: AppNavigation - Usuario null, mostrando LoginScreen")
                 // Si no hay usuario, mostrar login
                 LoginScreen(
                     authViewModel = authViewModel,

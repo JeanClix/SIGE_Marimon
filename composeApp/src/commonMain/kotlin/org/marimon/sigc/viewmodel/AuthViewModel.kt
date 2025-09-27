@@ -51,8 +51,17 @@ class AuthViewModel : ViewModel() {
             _authState.value = result
             
             if (result is AuthResult.Success) {
+                println("DEBUG: AuthViewModel - Login exitoso")
+                println("DEBUG: AuthViewModel - Usuario: ${result.user}")
+                println("DEBUG: AuthViewModel - Rol: ${result.user.role}")
+                
                 _isLoggedIn.value = true
                 _currentUser.value = result.user
+                
+                println("DEBUG: AuthViewModel - Estado actualizado - isLoggedIn: true")
+                println("DEBUG: AuthViewModel - Estado actualizado - currentUser: ${_currentUser.value}")
+            } else {
+                println("DEBUG: AuthViewModel - Login falló: ${result}")
             }
         }
     }
