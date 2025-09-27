@@ -37,16 +37,16 @@ fun AppNavigation(authViewModel: AuthViewModel) {
             UserRole.ADMIN -> {
                 println("DEBUG: AppNavigation - Redirigiendo a Panel Administrativo (ADMIN)")
                 AdminPanel(
-                    authViewModel = authViewModel,
-                    onLogout = {
-                        // El logout se maneja en el ViewModel
-                    }
-                )
+            authViewModel = authViewModel,
+            onLogout = {
+                // El logout se maneja en el ViewModel
+            }
+        )
             }
             UserRole.EMPLOYEE -> {
                 println("DEBUG: AppNavigation - Redirigiendo a EmployeeDashboard (EMPLOYEE)")
                 EmployeeDashboard(
-                    authViewModel = authViewModel,
+            authViewModel = authViewModel,
                     onLogout = {
                         // El logout se maneja en el ViewModel
                     }
@@ -65,6 +65,7 @@ fun AppNavigation(authViewModel: AuthViewModel) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminPanel(
     authViewModel: AuthViewModel,
