@@ -63,38 +63,56 @@ class DualAuthRepository {
     
     suspend fun login(loginRequest: LoginRequest): AuthResult {
         return try {
+            println("DEBUG: DualAuthRepository.login iniciado con email: ${loginRequest.email}")
+            
             // Simular delay de red
             delay(1000)
             
             // Validar campos
             if (loginRequest.email.isBlank() || loginRequest.password.isBlank()) {
+                println("DEBUG: Campos vacíos - email: '${loginRequest.email}', password: '${loginRequest.password}'")
                 return AuthResult.Error("Email y contraseña son requeridos")
             }
             
             // Primero intentar autenticación como administrador con Supabase
+            println("DEBUG: Intentando login como administrador...")
             val adminResult = tryLoginAsAdmin(loginRequest)
+            println("DEBUG: Resultado admin: $adminResult")
+            
             if (adminResult is AuthResult.Success) {
+                println("DEBUG: Login admin exitoso, retornando resultado")
                 return adminResult
             }
             
             // Si no es admin, intentar como empleado
+            println("DEBUG: Login admin falló, intentando como empleado...")
             val employeeResult = tryLoginAsEmployee(loginRequest)
+            println("DEBUG: Resultado empleado: $employeeResult")
+            
             if (employeeResult is AuthResult.Success) {
+                println("DEBUG: Login empleado exitoso, retornando resultado")
                 return employeeResult
             }
             
             // Si ninguno funciona, retornar error
+            println("DEBUG: Ambos logins fallaron, retornando error")
             AuthResult.Error("Credenciales incorrectas")
             
         } catch (e: Exception) {
+            println("DEBUG: Excepción en login: ${e.message}")
             AuthResult.Error("Error de conexión: ${e.message}")
         }
     }
     
     private suspend fun tryLoginAsAdmin(loginRequest: LoginRequest): AuthResult {
         return try {
+            println("DEBUG: tryLoginAsAdmin iniciado para email: ${loginRequest.email}")
+            
             // Hacer llamada a la API de autenticación de Supabase
-            val response = httpClient.post("${SupabaseConfig.SUPABASE_URL}/auth/v1/token?grant_type=password") {
+            val url = "${SupabaseConfig.SUPABASE_URL}/auth/v1/token?grant_type=password"
+            println("DEBUG: URL de autenticación admin: $url")
+            
+            val response = httpClient.post(url) {
                 headers {
                     append(HttpHeaders.Authorization, "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}")
                     append(HttpHeaders.ContentType, "application/json")
@@ -103,8 +121,11 @@ class DualAuthRepository {
                 setBody(loginRequest)
             }
             
+            println("DEBUG: Respuesta admin - Status: ${response.status}")
+            
             if (response.status.isSuccess()) {
                 val authResponse = response.body<DualSupabaseAuthResponse>()
+                println("DEBUG: AuthResponse admin: $authResponse")
                 
                 if (authResponse.user != null) {
                     val user = User(
@@ -118,15 +139,19 @@ class DualAuthRepository {
                         updatedAt = authResponse.user.updated_at
                     )
                     
+                    println("DEBUG: Usuario admin creado: $user")
                     AuthResult.Success(user)
                 } else {
+                    println("DEBUG: Error - usuario null en respuesta admin")
                     AuthResult.Error("Error al obtener datos del usuario")
                 }
             } else {
+                println("DEBUG: Error en respuesta admin - Status: ${response.status}")
                 AuthResult.Error("Credenciales de administrador incorrectas")
             }
             
         } catch (e: Exception) {
+            println("DEBUG: Excepción en tryLoginAsAdmin: ${e.message}")
             AuthResult.Error("Error de conexión con Supabase: ${e.message}")
         }
     }
