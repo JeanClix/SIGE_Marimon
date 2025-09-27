@@ -5,7 +5,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import org.marimon.sigc.ui.screens.HomeScreen
 import org.marimon.sigc.ui.screens.LoginScreen
-import org.marimon.sigc.ui.screens.EmployeeScreen
+import org.marimon.sigc.ui.screens.EmployeeDashboard
 import org.marimon.sigc.data.model.UserRole
 import org.marimon.sigc.viewmodel.AuthViewModel
 
@@ -26,7 +26,7 @@ fun AppNavigation(authViewModel: AuthViewModel) {
                 )
             }
             UserRole.EMPLOYEE -> {
-                EmployeeScreen(
+                EmployeeDashboard(
                     authViewModel = authViewModel,
                     onLogout = {
                         // El logout se maneja en el ViewModel

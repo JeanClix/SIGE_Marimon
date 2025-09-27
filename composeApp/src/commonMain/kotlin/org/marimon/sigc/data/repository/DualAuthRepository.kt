@@ -6,6 +6,7 @@ import io.ktor.client.engine.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import io.ktor.client.statement.bodyAsText
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
@@ -42,10 +43,11 @@ data class EmpleadoLoginResponse(
     val nombre: String,
     val email_corporativo: String,
     val area_id: Int,
-    val area_nombre: String,
     val password: String,
     val imagen_url: String? = null,
-    val activo: Boolean = true
+    val activo: Boolean = true,
+    val created_at: String? = null,
+    val updated_at: String? = null
 )
 
 class DualAuthRepository {
@@ -146,9 +148,6 @@ class DualAuthRepository {
             println("DEBUG: Respuesta de búsqueda de empleado - Status: ${response.status}")
             
             if (response.status.isSuccess()) {
-                val responseBody = response.bodyAsText()
-                println("DEBUG: Respuesta completa de Supabase: $responseBody")
-                
                 val empleados = response.body<List<EmpleadoLoginResponse>>()
                 println("DEBUG: Empleados encontrados: ${empleados.size}")
                 
@@ -171,10 +170,11 @@ class DualAuthRepository {
                             firstName = empleado.nombre.split(" ").firstOrNull() ?: empleado.nombre,
                             lastName = empleado.nombre.split(" ").drop(1).joinToString(" "),
                             role = UserRole.EMPLOYEE,
-                            createdAt = null,
-                            updatedAt = null
+                            createdAt = empleado.created_at,
+                            updatedAt = empleado.updated_at
                         )
                         
+                        println("DEBUG: Usuario empleado creado: $user")
                         AuthResult.Success(user)
                     } else {
                         AuthResult.Error("Contraseña incorrecta")
@@ -185,8 +185,6 @@ class DualAuthRepository {
                 }
             } else {
                 println("DEBUG: Error en respuesta de Supabase: ${response.status}")
-                val errorBody = response.bodyAsText()
-                println("DEBUG: Error body: $errorBody")
                 AuthResult.Error("Error al buscar empleado")
             }
             
