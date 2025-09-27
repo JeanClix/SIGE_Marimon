@@ -212,23 +212,18 @@ fun LoginScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "Configuración de Supabase:",
+                        text = "Credenciales de Prueba:",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                     Text(
-                        text = "1. Configura tu URL y API Key en SupabaseConfig.kt",
+                        text = "👤 Administrador: admin@sige.com / admin123",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                     Text(
-                        text = "2. Crea usuarios en tu panel de Supabase",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    Text(
-                        text = "3. Usa email y contraseña para iniciar sesión",
+                        text = "👥 Empleado: jose12@sige.com / jose12",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
