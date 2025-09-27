@@ -296,7 +296,7 @@ fun ProductCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "$${String.format("%.2f", producto.precio)}",
+                    text = "$${"%.2f".format(producto.precio)}",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
