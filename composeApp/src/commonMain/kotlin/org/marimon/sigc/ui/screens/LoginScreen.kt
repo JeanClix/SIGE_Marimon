@@ -218,17 +218,12 @@ fun LoginScreen(
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                     Text(
-                        text = "👤 Admin: admin@sige.com / admin123",
+                        text = "👤 Admin (Supabase Auth): admin@sige.com / admin123",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                     Text(
-                        text = "👥 Usuario: usuario@sige.com / user123",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    Text(
-                        text = "👨‍💼 Empleado: jose12@sige.com / jose12",
+                        text = "👨‍💼 Empleado (Tabla Empleado): jose12@sige.com / jose12",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )

@@ -14,8 +14,7 @@ import org.marimon.sigc.data.repository.AuthRepository
 
 class AuthViewModel : ViewModel() {
     
-    private val dualAuthRepository = DualAuthRepository()
-    private val originalAuthRepository = AuthRepository()
+    private val authRepository = DualAuthRepository()
     
     private val _authState = MutableStateFlow<AuthResult>(AuthResult.Error(""))
     val authState: StateFlow<AuthResult> = _authState.asStateFlow()
@@ -34,12 +33,12 @@ class AuthViewModel : ViewModel() {
     private fun checkCurrentSession() {
         viewModelScope.launch {
             println("DEBUG: AuthViewModel - checkCurrentSession iniciado")
-            val loggedIn = dualAuthRepository.isLoggedIn()
+            val loggedIn = authRepository.isLoggedIn()
             println("DEBUG: AuthViewModel - checkCurrentSession - loggedIn: $loggedIn")
             _isLoggedIn.value = loggedIn
 
             if (loggedIn) {
-                val user = dualAuthRepository.getCurrentUser()
+                val user = authRepository.getCurrentUser()
                 println("DEBUG: AuthViewModel - checkCurrentSession - user: $user")
                 _currentUser.value = user
             }
@@ -51,47 +50,29 @@ class AuthViewModel : ViewModel() {
             _authState.value = AuthResult.Loading
             
             val loginRequest = LoginRequest(email, password)
+            val result = authRepository.login(loginRequest)
             
-            // Primero intentar con el sistema dual (Supabase + empleados)
-            val dualResult = dualAuthRepository.login(loginRequest)
+            _authState.value = result
             
-            if (dualResult is AuthResult.Success) {
-                println("DEBUG: AuthViewModel - Login exitoso con sistema dual")
-                println("DEBUG: AuthViewModel - Usuario: ${dualResult.user}")
-                println("DEBUG: AuthViewModel - Rol: ${dualResult.user.role}")
+            if (result is AuthResult.Success) {
+                println("DEBUG: AuthViewModel - Login exitoso")
+                println("DEBUG: AuthViewModel - Usuario: ${result.user}")
+                println("DEBUG: AuthViewModel - Rol: ${result.user.role}")
                 
-                _authState.value = dualResult
                 _isLoggedIn.value = true
-                _currentUser.value = dualResult.user
+                _currentUser.value = result.user
                 
                 println("DEBUG: AuthViewModel - Estado actualizado - isLoggedIn: true")
                 println("DEBUG: AuthViewModel - Estado actualizado - currentUser: ${_currentUser.value}")
             } else {
-                // Si falla el sistema dual, intentar con el sistema original
-                println("DEBUG: AuthViewModel - Sistema dual falló, intentando sistema original")
-                val originalResult = originalAuthRepository.login(loginRequest)
-                
-                if (originalResult is AuthResult.Success) {
-                    // Convertir usuario original a usuario con rol ADMIN
-                    val userWithRole = originalResult.user.copy(role = org.marimon.sigc.data.model.UserRole.ADMIN)
-                    
-                    println("DEBUG: AuthViewModel - Login exitoso con sistema original")
-                    println("DEBUG: AuthViewModel - Usuario: $userWithRole")
-                    
-                    _authState.value = AuthResult.Success(userWithRole)
-                    _isLoggedIn.value = true
-                    _currentUser.value = userWithRole
-                } else {
-                    println("DEBUG: AuthViewModel - Ambos sistemas fallaron")
-                    _authState.value = originalResult
-                }
+                println("DEBUG: AuthViewModel - Login falló: ${result}")
             }
         }
     }
     
     fun logout() {
         viewModelScope.launch {
-            val result = dualAuthRepository.logout()
+            val result = authRepository.logout()
             _authState.value = result
             
             _isLoggedIn.value = false
