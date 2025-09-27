@@ -27,14 +27,14 @@ class ProductoViewModel : ViewModel() {
                     "apikey" to SupabaseConfig.SUPABASE_ANON_KEY,
                     "Authorization" to "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}"
                 )
-                
+
                 val response: HttpResponse = SupabaseClient.httpClient.get(url) {
                     headers.forEach { (k, v) -> header(k, v) }
                 }
-                
+
                 val productosJson = Json.parseToJsonElement(response.bodyAsText()).jsonArray
                 productos.clear()
-                
+
                 for (row in productosJson) {
                     val obj = row.jsonObject
                     productos.add(
@@ -66,7 +66,7 @@ class ProductoViewModel : ViewModel() {
                     "Authorization" to "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}",
                     "Content-Type" to "application/json"
                 )
-                
+
                 val body = """
                     {
                         "codigo": "${producto.codigo}",
@@ -90,6 +90,80 @@ class ProductoViewModel : ViewModel() {
                     cargarProductos() // Recargar la lista
                 } else {
                     onError("Error al crear producto: ${response.status}")
+                }
+            } catch (e: Exception) {
+                onError("Error: ${e.message}")
+            }
+        }
+    }
+
+    fun editarProducto(producto: Producto, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val url = "${SupabaseConfig.SUPABASE_URL}/rest/v1/productos?id=eq.${producto.id}"
+                val headers = mapOf(
+                    "apikey" to SupabaseConfig.SUPABASE_ANON_KEY,
+                    "Authorization" to "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}",
+                    "Content-Type" to "application/json"
+                )
+
+                val body = """
+                    {
+                        "codigo": "${producto.codigo}",
+                        "nombre": "${producto.nombre}",
+                        "descripcion": ${if (producto.descripcion != null) "\"${producto.descripcion}\"" else "null"},
+                        "especificaciones": ${if (producto.especificaciones != null) "\"${producto.especificaciones}\"" else "null"},
+                        "precio": ${producto.precio},
+                        "cantidad": ${producto.cantidad},
+                        "imagen_url": ${if (producto.imagenUrl != null) "\"${producto.imagenUrl}\"" else "null"},
+                        "activo": ${producto.activo}
+                    }
+                """.trimIndent()
+
+                val response: HttpResponse = SupabaseClient.httpClient.patch(url) {
+                    headers.forEach { (k, v) -> header(k, v) }
+                    setBody(body)
+                }
+
+                if (response.status.isSuccess()) {
+                    onSuccess()
+                    cargarProductos()
+                } else {
+                    onError("Error al actualizar producto: ${response.status}")
+                }
+            } catch (e: Exception) {
+                onError("Error: ${e.message}")
+            }
+        }
+    }
+
+    fun eliminarProducto(productoId: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val url = "${SupabaseConfig.SUPABASE_URL}/rest/v1/productos?id=eq.$productoId"
+                val headers = mapOf(
+                    "apikey" to SupabaseConfig.SUPABASE_ANON_KEY,
+                    "Authorization" to "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}",
+                    "Content-Type" to "application/json"
+                )
+
+                // Soft delete: marcar como inactivo en lugar de eliminar fÃ­sicamente
+                val body = """
+                    {
+                        "activo": false
+                    }
+                """.trimIndent()
+
+                val response: HttpResponse = SupabaseClient.httpClient.patch(url) {
+                    headers.forEach { (k, v) -> header(k, v) }
+                    setBody(body)
+                }
+
+                if (response.status.isSuccess()) {
+                    onSuccess()
+                    cargarProductos()
+                } else {
+                    onError("Error al eliminar producto: ${response.status}")
                 }
             } catch (e: Exception) {
                 onError("Error: ${e.message}")
