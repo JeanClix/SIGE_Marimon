@@ -44,6 +44,13 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation("androidx.navigation:navigation-compose:2.7.7")
             implementation(libs.ktor.client.cio)
+            
+            // HTTP simple para subida de archivos
+            implementation("com.squareup.okhttp3:okhttp:4.11.0")
+            implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+            
+            // Coil para carga de imágenes
+            implementation("io.coil-kt:coil-compose:2.4.0")
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
@@ -104,5 +111,8 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+    // Dependencias Firebase comentadas temporalmente
+    // implementation("com.google.firebase:firebase-storage-ktx:20.2.1")
+    // implementation("com.google.firebase:firebase-auth-ktx:22.3.0")
+    // implementation("com.google.firebase:firebase-common-ktx:20.4.0")
 }
-

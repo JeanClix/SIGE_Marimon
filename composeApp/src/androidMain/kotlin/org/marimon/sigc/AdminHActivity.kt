@@ -18,6 +18,7 @@ import androidx.compose.foundation.clickable
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
         setContent {
             NavigationHost()
         }
