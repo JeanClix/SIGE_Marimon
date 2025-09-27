@@ -14,9 +14,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import org.marimon.sigc.navigation.AppNavigation
 import org.marimon.sigc.viewmodel.AuthViewModel
+import org.marimon.sigc.data.model.User
+import org.marimon.sigc.data.model.UserRole
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,6 +27,37 @@ class MainActivity : ComponentActivity() {
         
         setContent {
             val authViewModel = remember { AuthViewModel() }
+            
+            LaunchedEffect(Unit) {
+                val userId = intent.getStringExtra("user_id")
+                val userEmail = intent.getStringExtra("user_email")
+                val userName = intent.getStringExtra("user_name")
+                val userRole = intent.getStringExtra("user_role")
+                
+                println("DEBUG: MainActivity - Datos recibidos del LoginActivity:")
+                println("DEBUG: MainActivity - userId: $userId")
+                println("DEBUG: MainActivity - userEmail: $userEmail")
+                println("DEBUG: MainActivity - userName: $userName")
+                println("DEBUG: MainActivity - userRole: $userRole")
+                
+                if (userId != null && userEmail != null && userName != null && userRole != null) {
+                    val user = User(
+                        id = userId,
+                        username = userName,
+                        email = userEmail,
+                        firstName = userName,
+                        lastName = "",
+                        role = if (userRole == "ADMIN") UserRole.ADMIN else UserRole.EMPLOYEE,
+                        createdAt = null,
+                        updatedAt = null
+                    )
+                    
+                    println("DEBUG: MainActivity - Usuario creado: $user")
+                    
+                    authViewModel.setLoggedInUser(user)
+                }
+            }
+            
             AppNavigation(authViewModel = authViewModel)
         }
     }

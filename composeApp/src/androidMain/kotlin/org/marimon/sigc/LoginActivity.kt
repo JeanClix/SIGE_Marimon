@@ -62,7 +62,17 @@ class LoginActivity : ComponentActivity() {
                 val authViewModel = remember { AuthViewModel() }
                 LoginScreenAndroid(authViewModel = authViewModel) { success ->
                     if (success) {
+                        val currentUser = authViewModel.currentUser.value
                         val intent = Intent(this, MainActivity::class.java)
+                        
+                        // Pasar datos del usuario al MainActivity
+                        currentUser?.let { user ->
+                            intent.putExtra("user_id", user.id)
+                            intent.putExtra("user_email", user.email)
+                            intent.putExtra("user_name", user.firstName)
+                            intent.putExtra("user_role", user.role.name)
+                        }
+                        
                         startActivity(intent)
                         finish()
                     }
