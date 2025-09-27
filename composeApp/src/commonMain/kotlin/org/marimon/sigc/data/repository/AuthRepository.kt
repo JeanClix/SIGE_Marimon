@@ -30,13 +30,13 @@ class AuthRepository {
         delay(1000)
         
         return when {
-            loginRequest.username.isBlank() || loginRequest.password.isBlank() -> {
-                AuthResult.Error("Usuario y contraseña son requeridos")
+            loginRequest.email.isBlank() || loginRequest.password.isBlank() -> {
+                AuthResult.Error("Email y contraseña son requeridos")
             }
-            loginRequest.username == "admin" && loginRequest.password == "admin123" -> {
+            loginRequest.email == "admin@sige.com" && loginRequest.password == "admin123" -> {
                 AuthResult.Success(mockUsers[0])
             }
-            loginRequest.username == "usuario" && loginRequest.password == "user123" -> {
+            loginRequest.email == "usuario@sige.com" && loginRequest.password == "user123" -> {
                 AuthResult.Success(mockUsers[1])
             }
             else -> {

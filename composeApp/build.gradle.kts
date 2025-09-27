@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
-    alias(libs.plugins.kotlinxSerialization)
+    alias(libs.plugins.kotlinx.serialization)
 }
 
 kotlin {
@@ -42,6 +42,13 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.ktor.client.cio)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
+        }
+        jsMain.dependencies {
+            implementation(libs.ktor.client.js)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -54,10 +61,10 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(projects.shared)
             
-            // Supabase dependencies
-            implementation(libs.supabase.postgrest)
-            implementation(libs.supabase.auth)
-            implementation(libs.supabase.realtime)
+            // HTTP Client dependencies
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.coroutines.core)
         }
