@@ -146,12 +146,16 @@ class DualAuthRepository {
             println("DEBUG: Respuesta de búsqueda de empleado - Status: ${response.status}")
             
             if (response.status.isSuccess()) {
+                val responseBody = response.bodyAsText()
+                println("DEBUG: Respuesta completa de Supabase: $responseBody")
+                
                 val empleados = response.body<List<EmpleadoLoginResponse>>()
                 println("DEBUG: Empleados encontrados: ${empleados.size}")
                 
                 if (empleados.isNotEmpty()) {
                     val empleado = empleados.first()
                     println("DEBUG: Empleado encontrado: $empleado")
+                    println("DEBUG: Empleado activo: ${empleado.activo}")
                     
                     // Verificar contraseña directamente desde Supabase
                     println("DEBUG: Verificando contraseña para ${empleado.email_corporativo}")
