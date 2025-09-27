@@ -11,13 +11,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.google.firebase.FirebaseApp
 import org.marimon.sigc.viewmodel.AuthViewModel
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        FirebaseApp.initializeApp(this)
         setContent {
             val authViewModel = remember { AuthViewModel() }
             LoginScreenAndroid(authViewModel = authViewModel) { success ->

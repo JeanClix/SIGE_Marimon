@@ -57,7 +57,7 @@ fun AdminMainScreen(navController: NavHostController) {
 
 @Composable
 fun AdminREmpleadoScreen(navController: NavHostController) {
-    AdminREmpleadoApp(
+    _root_ide_package_.org.marimon.sigc.Empleado.AdminREmpleadoApp(
         currentRoute = Routes.EMPLOYEES,
         onNavigate = { route ->
             navController.navigate(route) {
