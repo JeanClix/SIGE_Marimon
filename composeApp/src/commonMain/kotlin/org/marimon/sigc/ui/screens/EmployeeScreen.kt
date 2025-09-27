@@ -15,6 +15,8 @@ import androidx.compose.runtime.collectAsState
 import org.marimon.sigc.data.model.User
 import org.marimon.sigc.data.model.UserRole
 import org.marimon.sigc.viewmodel.AuthViewModel
+import org.marimon.sigc.viewmodel.ProductoViewModel
+import org.marimon.sigc.model.Producto
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,6 +25,12 @@ fun EmployeeScreen(
     onLogout: () -> Unit
 ) {
     val currentUser by authViewModel.currentUser.collectAsState()
+    val productoViewModel = remember { ProductoViewModel() }
+    
+    // Cargar productos al iniciar la pantalla
+    LaunchedEffect(Unit) {
+        productoViewModel.cargarProductos()
+    }
     
     println("DEBUG: EmployeeScreen - Usuario actual: $currentUser")
     println("DEBUG: EmployeeScreen - Rol: ${currentUser?.role}")
@@ -48,8 +56,8 @@ fun EmployeeScreen(
             // Filtro de productos
             ProductFilterSection()
             
-            // Lista de productos en dos columnas
-            ProductGridSection()
+            // Lista de productos en dos columnas (desde BD)
+            ProductGridSection(productos = productoViewModel.productos)
         }
     }
 }
@@ -160,19 +168,48 @@ fun ProductFilterSection() {
 }
 
 @Composable
-fun ProductGridSection() {
-    // Datos de ejemplo de productos
-    val sampleProducts = listOf(
-        SampleProduct("Producto 1", "Descripción del producto 1", "100.00"),
-        SampleProduct("Producto 2", "Descripción del producto 2", "150.00"),
-        SampleProduct("Producto 3", "Descripción del producto 3", "200.00"),
-        SampleProduct("Producto 4", "Descripción del producto 4", "75.00"),
-        SampleProduct("Producto 5", "Descripción del producto 5", "300.00"),
-        SampleProduct("Producto 6", "Descripción del producto 6", "125.00")
-    )
+fun ProductGridSection(productos: List<Producto>) {
+    // Filtrar solo productos activos
+    val productosActivos = productos.filter { it.activo }
+    
+    if (productosActivos.isEmpty()) {
+        // Mostrar mensaje si no hay productos
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "📦",
+                    style = MaterialTheme.typography.headlineLarge,
+                    modifier = Modifier.size(48.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "No hay productos disponibles",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Los productos aparecerán aquí cuando estén disponibles",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            }
+        }
+        return
+    }
     
     // Dividir productos en pares para crear filas de dos columnas
-    val productPairs = sampleProducts.chunked(2)
+    val productPairs = productosActivos.chunked(2)
     
     LazyColumn(
         modifier = Modifier
@@ -187,14 +224,14 @@ fun ProductGridSection() {
             ) {
                 // Primera columna
                 ProductCard(
-                    product = pair[0],
+                    producto = pair[0],
                     modifier = Modifier.weight(1f)
                 )
                 
                 // Segunda columna (si existe)
                 if (pair.size > 1) {
                     ProductCard(
-                        product = pair[1],
+                        producto = pair[1],
                         modifier = Modifier.weight(1f)
                     )
                 } else {
@@ -208,7 +245,7 @@ fun ProductGridSection() {
 
 @Composable
 fun ProductCard(
-    product: SampleProduct,
+    producto: Producto,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -221,8 +258,19 @@ fun ProductCard(
         Column(
             modifier = Modifier.padding(12.dp)
         ) {
+            // Código del producto
             Text(
-                text = product.name,
+                text = "Código: ${producto.codigo}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Medium
+            )
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            // Nombre del producto
+            Text(
+                text = producto.nombre,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -230,31 +278,40 @@ fun ProductCard(
             
             Spacer(modifier = Modifier.height(4.dp))
             
-            Text(
-                text = product.description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
+            // Descripción del producto
+            if (!producto.descripcion.isNullOrBlank()) {
+                Text(
+                    text = producto.descripcion,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+            }
             
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "$${product.price}",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
+            // Precio y cantidad
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "$${String.format("%.2f", producto.precio)}",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                
+                Text(
+                    text = "Stock: ${producto.cantidad}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
         }
     }
 }
 
-data class SampleProduct(
-    val name: String,
-    val description: String,
-    val price: String
-)
 
 @Composable
 fun EmployeeInfoCard(user: User?) {
