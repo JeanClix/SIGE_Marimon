@@ -96,8 +96,12 @@ class EmpleadoViewModel : ViewModel() {
     }
 
     fun crearEmpleado(empleado: EmpleadoCreate, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        println("DEBUG: EmpleadoViewModel.crearEmpleado llamado")
+        println("DEBUG: Empleado a crear: $empleado")
+        
         viewModelScope.launch {
             try {
+                println("DEBUG: Iniciando creación de empleado en Supabase")
                 val url = "${SupabaseConfig.SUPABASE_URL}/rest/v1/Empleado"
                 val headers = mapOf(
                     "apikey" to SupabaseConfig.SUPABASE_ANON_KEY,
@@ -116,18 +120,26 @@ class EmpleadoViewModel : ViewModel() {
                     }
                 """.trimIndent()
 
+                println("DEBUG: Enviando request a Supabase: $url")
+                println("DEBUG: Body: $body")
+                
                 val response: HttpResponse = SupabaseClient.httpClient.post(url) {
                     headers.forEach { (k, v) -> header(k, v) }
                     setBody(body)
                 }
 
+                println("DEBUG: Respuesta recibida - Status: ${response.status}")
+                
                 if (response.status.isSuccess()) {
+                    println("DEBUG: Empleado creado exitosamente en Supabase")
                     onSuccess()
                     cargarEmpleados()
                 } else {
+                    println("DEBUG: Error en respuesta de Supabase: ${response.status}")
                     onError("Error al crear empleado: ${response.status}")
                 }
             } catch (e: Exception) {
+                println("DEBUG: Excepción al crear empleado: ${e.message}")
                 onError("Error: ${e.message}")
             }
         }

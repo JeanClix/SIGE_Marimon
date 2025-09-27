@@ -104,8 +104,18 @@ fun CrearEmpleadoDialog(
         confirmButton = {
             Button(
                 onClick = {
+                    println("DEBUG: Botón confirmar presionado")
+                    println("DEBUG: nombre = '$nombre'")
+                    println("DEBUG: email = '$email'")
+                    println("DEBUG: password = '$password'")
+                    println("DEBUG: areaSeleccionada = ${areaSeleccionada?.nombre}")
+                    println("DEBUG: imagenUrl = '$imagenUrl'")
+                    
                     areaSeleccionada?.let { area ->
+                        println("DEBUG: Llamando onConfirm con área: ${area.nombre}")
                         onConfirm(nombre, email, area.id, imagenUrl, password)
+                    } ?: run {
+                        println("DEBUG: ERROR - No hay área seleccionada")
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Black),

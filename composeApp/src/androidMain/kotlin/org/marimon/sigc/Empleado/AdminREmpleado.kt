@@ -181,6 +181,9 @@ fun EmpleadoListScreen(
                 areas = areas,
                 onDismiss = { showDialog = false },
                 onConfirm = { nombre, email, areaId, urlImagen, password ->
+                    println("DEBUG: onConfirm llamado desde AdminREmpleado")
+                    println("DEBUG: Parámetros recibidos - nombre: '$nombre', email: '$email', areaId: $areaId, password: '$password'")
+                    
                     val nuevoEmpleado = EmpleadoCreate(
                         nombre = nombre,
                         emailCorporativo = email,
@@ -189,14 +192,19 @@ fun EmpleadoListScreen(
                         imagenUrl = urlImagen,
                         activo = true
                     )
+                    
+                    println("DEBUG: Creando empleado: $nuevoEmpleado")
+                    
                     empleadoViewModel.crearEmpleado(
                         empleado = nuevoEmpleado,
                         onSuccess = {
+                            println("DEBUG: Empleado creado exitosamente")
                             showDialog = false
                             mensaje = "✅ Empleado creado exitosamente"
                             mostrarMensaje = true
                         },
                         onError = { error ->
+                            println("DEBUG: Error al crear empleado: $error")
                             mensaje = "❌ Error: $error"
                             mostrarMensaje = true
                         }
