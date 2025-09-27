@@ -5,6 +5,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -62,6 +64,10 @@ fun EmpleadoListScreen(
     empleadoViewModel: EmpleadoViewModel
 ) {
     var showDialog by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var empleadoAEditar by remember { mutableStateOf<Empleado?>(null) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var empleadoAEliminar by remember { mutableStateOf<Empleado?>(null) }
     var mensaje by remember { mutableStateOf("") }
     var mostrarMensaje by remember { mutableStateOf(false) }
     Box(modifier = Modifier.fillMaxSize()) {
@@ -116,15 +122,58 @@ fun EmpleadoListScreen(
                             Text(empleado.areaNombre, style = MaterialTheme.typography.bodySmall)
                         }
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = if (empleado.activo) "Activo" else "Inactivo",
-                            color = if (empleado.activo) Color(0xFF388E3C) else Color.Red,
-                            style = MaterialTheme.typography.labelMedium
-                        )
+                        Column {
+                            Text(
+                                text = if (empleado.activo) "Activo" else "Inactivo",
+                                color = if (empleado.activo) Color(0xFF388E3C) else Color.Red,
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                            
+                            // Botones de acción
+                            if (empleado.activo) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    modifier = Modifier.padding(top = 4.dp)
+                                ) {
+                                    // Botón editar
+                                    IconButton(
+                                        onClick = { 
+                                            empleadoAEditar = empleado
+                                            showEditDialog = true
+                                        },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Edit,
+                                            contentDescription = "Editar",
+                                            tint = Color(0xFF2196F3),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    
+                                    // Botón eliminar
+                                    IconButton(
+                                        onClick = { 
+                                            empleadoAEliminar = empleado
+                                            showDeleteDialog = true
+                                        },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = "Eliminar",
+                                            tint = Color(0xFFE53935),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
+        // Diálogo crear empleado
         if (showDialog) {
             CrearEmpleadoDialog(
                 areas = areas,
@@ -149,6 +198,80 @@ fun EmpleadoListScreen(
                             mostrarMensaje = true
                         }
                     )
+                }
+            )
+        }
+        
+        // Diálogo editar empleado
+        if (showEditDialog && empleadoAEditar != null) {
+            EditarEmpleadoDialog(
+                empleado = empleadoAEditar!!,
+                areas = areas,
+                onDismiss = { 
+                    showEditDialog = false
+                    empleadoAEditar = null
+                },
+                onConfirm = { empleadoEditado ->
+                    empleadoViewModel.editarEmpleado(
+                        empleado = empleadoEditado,
+                        onSuccess = {
+                            showEditDialog = false
+                            empleadoAEditar = null
+                            mensaje = "✅ Empleado actualizado exitosamente"
+                            mostrarMensaje = true
+                        },
+                        onError = { error ->
+                            mensaje = "❌ Error: $error"
+                            mostrarMensaje = true
+                        }
+                    )
+                }
+            )
+        }
+        
+        // Diálogo confirmar eliminación
+        if (showDeleteDialog && empleadoAEliminar != null) {
+            AlertDialog(
+                onDismissRequest = { 
+                    showDeleteDialog = false
+                    empleadoAEliminar = null
+                },
+                title = { Text("Confirmar eliminación") },
+                text = { 
+                    Text("¿Estás seguro de que deseas eliminar a ${empleadoAEliminar!!.nombre}?\n\nEsta acción marcará al empleado como inactivo.")
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            empleadoViewModel.eliminarEmpleado(
+                                empleadoId = empleadoAEliminar!!.id,
+                                onSuccess = {
+                                    showDeleteDialog = false
+                                    empleadoAEliminar = null
+                                    mensaje = "✅ Empleado eliminado exitosamente"
+                                    mostrarMensaje = true
+                                },
+                                onError = { error ->
+                                    mensaje = "❌ Error: $error"
+                                    mostrarMensaje = true
+                                }
+                            )
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
+                    ) {
+                        Text("Eliminar", color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = { 
+                            showDeleteDialog = false
+                            empleadoAEliminar = null
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+                    ) {
+                        Text("Cancelar", color = Color.White)
+                    }
                 }
             )
         }

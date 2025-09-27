@@ -131,4 +131,75 @@ class EmpleadoViewModel : ViewModel() {
             }
         }
     }
+
+    fun editarEmpleado(empleado: Empleado, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val url = "${SupabaseConfig.SUPABASE_URL}/rest/v1/Empleado?id=eq.${empleado.id}"
+                val headers = mapOf(
+                    "apikey" to SupabaseConfig.SUPABASE_ANON_KEY,
+                    "Authorization" to "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}",
+                    "Content-Type" to "application/json"
+                )
+                
+                val body = """
+                    {
+                        "nombre": "${empleado.nombre}",
+                        "email_corporativo": "${empleado.emailCorporativo}",
+                        "area_id": ${empleado.areaId},
+                        "imagen_url": ${if (empleado.imagenUrl != null) "\"${empleado.imagenUrl}\"" else "null"},
+                        "activo": ${empleado.activo}
+                    }
+                """.trimIndent()
+
+                val response: HttpResponse = SupabaseClient.httpClient.patch(url) {
+                    headers.forEach { (k, v) -> header(k, v) }
+                    setBody(body)
+                }
+
+                if (response.status.isSuccess()) {
+                    onSuccess()
+                    cargarEmpleados()
+                } else {
+                    onError("Error al actualizar empleado: ${response.status}")
+                }
+            } catch (e: Exception) {
+                onError("Error: ${e.message}")
+            }
+        }
+    }
+
+    fun eliminarEmpleado(empleadoId: Int, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val url = "${SupabaseConfig.SUPABASE_URL}/rest/v1/Empleado?id=eq.$empleadoId"
+                val headers = mapOf(
+                    "apikey" to SupabaseConfig.SUPABASE_ANON_KEY,
+                    "Authorization" to "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}",
+                    "Content-Type" to "application/json"
+                )
+                
+                // Soft delete: marcar como inactivo en lugar de eliminar físicamente
+                val body = """
+                    {
+                        "activo": false
+                    }
+                """.trimIndent()
+
+                val response: HttpResponse = SupabaseClient.httpClient.patch(url) {
+                    headers.forEach { (k, v) -> header(k, v) }
+                    setBody(body)
+                }
+
+                if (response.status.isSuccess()) {
+                    onSuccess()
+                    cargarEmpleados()
+                } else {
+                    onError("Error al eliminar empleado: ${response.status}")
+                }
+            } catch (e: Exception) {
+                onError("Error: ${e.message}")
+            }
+        }
+    }
 }
