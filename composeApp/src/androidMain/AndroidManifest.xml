@@ -15,7 +15,7 @@
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity
             android:exported="true"
-            android:name="org.marimon.sigc.LoginActivity">
+            android:name="org.marimon.sigc.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -23,7 +23,7 @@
         </activity>
         <activity
             android:exported="true"
-            android:name="org.marimon.sigc.MainActivity" />
+            android:name="org.marimon.sigc.LoginActivity" />
     </application>
 
 </manifest>
