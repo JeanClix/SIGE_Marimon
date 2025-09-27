@@ -2,8 +2,6 @@ package org.marimon.sigc.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -173,24 +171,48 @@ fun ProductGridSection() {
         SampleProduct("Producto 6", "Descripción del producto 6", "125.00")
     )
     
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
+    // Dividir productos en pares para crear filas de dos columnas
+    val productPairs = sampleProducts.chunked(2)
+    
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(sampleProducts) { product ->
-            ProductCard(product = product)
+        items(productPairs) { pair ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Primera columna
+                ProductCard(
+                    product = pair[0],
+                    modifier = Modifier.weight(1f)
+                )
+                
+                // Segunda columna (si existe)
+                if (pair.size > 1) {
+                    ProductCard(
+                        product = pair[1],
+                        modifier = Modifier.weight(1f)
+                    )
+                } else {
+                    // Espacio vacío si solo hay un producto en la fila
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
         }
     }
 }
 
 @Composable
-fun ProductCard(product: SampleProduct) {
+fun ProductCard(
+    product: SampleProduct,
+    modifier: Modifier = Modifier
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
