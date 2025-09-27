@@ -42,10 +42,11 @@ data class EmpleadoLoginResponse(
     val nombre: String,
     val email_corporativo: String,
     val area_id: Int,
-    val area_nombre: String,
     val password: String,
     val imagen_url: String? = null,
-    val activo: Boolean = true
+    val activo: Boolean = true,
+    val created_at: String? = null,
+    val updated_at: String? = null
 )
 
 class DualAuthRepository {
