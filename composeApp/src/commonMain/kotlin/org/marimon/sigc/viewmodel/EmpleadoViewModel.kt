@@ -70,14 +70,14 @@ class EmpleadoViewModel : ViewModel() {
                     "apikey" to SupabaseConfig.SUPABASE_ANON_KEY,
                     "Authorization" to "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}"
                 )
-                
+
                 val response: HttpResponse = SupabaseClient.httpClient.get(url) {
                     headers.forEach { (k, v) -> header(k, v) }
                 }
-                
+
                 val areasJson = Json.parseToJsonElement(response.bodyAsText()).jsonArray
                 areas.clear()
-                
+
                 for (row in areasJson) {
                     val obj = row.jsonObject
                     areas.add(
@@ -104,7 +104,7 @@ class EmpleadoViewModel : ViewModel() {
                     "Authorization" to "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}",
                     "Content-Type" to "application/json"
                 )
-                
+
                 val body = """
                     {
                         "nombre": "${empleado.nombre}",
@@ -141,7 +141,7 @@ class EmpleadoViewModel : ViewModel() {
                     "Authorization" to "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}",
                     "Content-Type" to "application/json"
                 )
-                
+
                 val body = """
                     {
                         "nombre": "${empleado.nombre}",
@@ -178,7 +178,7 @@ class EmpleadoViewModel : ViewModel() {
                     "Authorization" to "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}",
                     "Content-Type" to "application/json"
                 )
-                
+
                 // Soft delete: marcar como inactivo en lugar de eliminar físicamente
                 val body = """
                     {
