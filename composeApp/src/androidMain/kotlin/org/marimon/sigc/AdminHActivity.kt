@@ -16,6 +16,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
+import android.content.Intent
 import org.marimon.sigc.navigation.AppNavigation
 import org.marimon.sigc.viewmodel.AuthViewModel
 import org.marimon.sigc.data.model.User
@@ -27,6 +29,7 @@ class MainActivity : ComponentActivity() {
         
         setContent {
             val authViewModel = remember { AuthViewModel() }
+            val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
             
             LaunchedEffect(Unit) {
                 val userId = intent.getStringExtra("user_id")
@@ -55,6 +58,16 @@ class MainActivity : ComponentActivity() {
                     println("DEBUG: MainActivity - Usuario creado: $user")
                     
                     authViewModel.setLoggedInUser(user)
+                }
+            }
+            
+            // Manejar logout - volver a LoginActivity
+            LaunchedEffect(isLoggedIn) {
+                if (!isLoggedIn) {
+                    println("DEBUG: MainActivity - Usuario deslogueado, volviendo a LoginActivity")
+                    val intent = Intent(this@MainActivity, LoginActivity::class.java)
+                    startActivity(intent)
+                    finish()
                 }
             }
             
