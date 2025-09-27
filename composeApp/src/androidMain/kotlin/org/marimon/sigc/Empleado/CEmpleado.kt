@@ -32,10 +32,11 @@ import androidx.compose.material3.CircularProgressIndicator
 fun CrearEmpleadoDialog(
     areas: List<Area>,
     onDismiss: () -> Unit,
-    onConfirm: (String, String, Int, String?) -> Unit
+    onConfirm: (String, String, Int, String?, String) -> Unit
 ) {
     var nombre by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var areaSeleccionada by remember { mutableStateOf(if (areas.isNotEmpty()) areas.first() else null) }
     var expanded by remember { mutableStateOf(false) }
     var imagenUri by remember { mutableStateOf<Uri?>(null) }
@@ -104,11 +105,11 @@ fun CrearEmpleadoDialog(
             Button(
                 onClick = {
                     areaSeleccionada?.let { area ->
-                        onConfirm(nombre, email, area.id, imagenUrl)
+                        onConfirm(nombre, email, area.id, imagenUrl, password)
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
-                enabled = !subiendo && nombre.isNotBlank() && email.isNotBlank() && areaSeleccionada != null
+                enabled = !subiendo && nombre.isNotBlank() && email.isNotBlank() && password.isNotBlank() && areaSeleccionada != null
             ) {
                 Text("Confirmar", color = Color.White)
             }
@@ -235,6 +236,15 @@ fun CrearEmpleadoDialog(
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("Email corporativo") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                )
+                
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Contraseña") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 8.dp)

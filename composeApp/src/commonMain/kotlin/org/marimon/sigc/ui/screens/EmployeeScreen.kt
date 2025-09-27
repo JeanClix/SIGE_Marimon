@@ -12,11 +12,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.collectAsState
 import org.marimon.sigc.data.model.User
+import org.marimon.sigc.data.model.UserRole
 import org.marimon.sigc.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
+fun EmployeeScreen(
     authViewModel: AuthViewModel,
     onLogout: () -> Unit
 ) {
@@ -26,11 +27,11 @@ fun HomeScreen(
         topBar = {
             TopAppBar(
                 title = {
-                Text(
-                    text = "SIGE Marimon - Administrador",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
+                    Text(
+                        text = "SIGE Marimon - Empleado",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
                 },
                 actions = {
                     TextButton(onClick = { 
@@ -41,8 +42,8 @@ fun HomeScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             )
         }
@@ -54,27 +55,61 @@ fun HomeScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Información del usuario
+            // Información del empleado
             item {
-                UserInfoCard(user = currentUser)
+                EmployeeInfoCard(user = currentUser)
             }
             
-            // Menú de opciones
+            // Mensaje de bienvenida
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "👋",
+                            style = MaterialTheme.typography.headlineLarge,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "¡Bienvenido al Sistema!",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            text = "Aquí puedes acceder a las funciones disponibles para empleados",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                }
+            }
+            
+            // Menú de opciones para empleados
             item {
                 Text(
-                    text = "Opciones del Sistema",
+                    text = "Opciones Disponibles",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             }
             
-            items(getMenuItems()) { menuItem ->
+            items(getEmployeeMenuItems()) { menuItem ->
                 MenuItemCard(
                     title = menuItem.title,
                     description = menuItem.description,
                     emoji = menuItem.emoji,
-                    onClick = { /* TODO: Implementar navegación */ }
+                    onClick = { /* TODO: Implementar navegación específica para empleados */ }
                 )
             }
         }
@@ -82,7 +117,7 @@ fun HomeScreen(
 }
 
 @Composable
-fun UserInfoCard(user: User?) {
+fun EmployeeInfoCard(user: User?) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -104,7 +139,7 @@ fun UserInfoCard(user: User?) {
             
             Column {
                 Text(
-                    text = "Bienvenido, ${user?.firstName ?: "Usuario"}",
+                    text = "Bienvenido, ${user?.firstName ?: "Empleado"}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -115,12 +150,7 @@ fun UserInfoCard(user: User?) {
                     color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                 )
                 Text(
-                    text = "Usuario: ${user?.username ?: "N/A"}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
-                )
-                Text(
-                    text = "Rol: ${user?.role?.name ?: "Administrador"}",
+                    text = "Rol: ${user?.role?.name ?: "Empleado"}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                 )
@@ -175,17 +205,27 @@ data class MenuItem(
     val emoji: String
 )
 
-fun getMenuItems(): List<MenuItem> {
+fun getEmployeeMenuItems(): List<MenuItem> {
     return listOf(
         MenuItem(
-            title = "Gestión de Empleados",
-            description = "Administrar información de empleados",
-            emoji = "👥"
+            title = "Mi Perfil",
+            description = "Ver y editar mi información personal",
+            emoji = "👤"
         ),
         MenuItem(
-            title = "Configuración",
-            description = "Configurar parámetros del sistema",
-            emoji = "⚙️"
+            title = "Mis Tareas",
+            description = "Ver las tareas asignadas",
+            emoji = "📋"
+        ),
+        MenuItem(
+            title = "Reportes",
+            description = "Generar reportes de mi trabajo",
+            emoji = "📊"
+        ),
+        MenuItem(
+            title = "Contacto",
+            description = "Información de contacto y soporte",
+            emoji = "📞"
         )
     )
 }

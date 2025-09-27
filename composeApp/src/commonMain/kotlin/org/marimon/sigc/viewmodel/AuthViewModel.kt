@@ -9,11 +9,11 @@ import kotlinx.coroutines.launch
 import org.marimon.sigc.data.model.AuthResult
 import org.marimon.sigc.data.model.LoginRequest
 import org.marimon.sigc.data.model.User
-import org.marimon.sigc.data.repository.SupabaseAuthRepository
+import org.marimon.sigc.data.repository.DualAuthRepository
 
 class AuthViewModel : ViewModel() {
     
-    private val authRepository = SupabaseAuthRepository()
+    private val authRepository = DualAuthRepository()
     
     private val _authState = MutableStateFlow<AuthResult>(AuthResult.Error(""))
     val authState: StateFlow<AuthResult> = _authState.asStateFlow()
@@ -60,9 +60,10 @@ class AuthViewModel : ViewModel() {
     fun logout() {
         viewModelScope.launch {
             val result = authRepository.logout()
+            _authState.value = result
+            
             _isLoggedIn.value = false
             _currentUser.value = null
-            _authState.value = AuthResult.Error("")
         }
     }
     
