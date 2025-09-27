@@ -132,6 +132,7 @@ class DualAuthRepository {
     private suspend fun tryLoginAsEmployee(loginRequest: LoginRequest): AuthResult {
         return try {
             // Buscar empleado por email y verificar contraseña
+            println("DEBUG: Buscando empleado con email: ${loginRequest.email}")
             val response = httpClient.get("${SupabaseConfig.SUPABASE_URL}/rest/v1/Empleado") {
                 headers {
                     append(HttpHeaders.Authorization, "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}")
@@ -142,16 +143,21 @@ class DualAuthRepository {
                 parameter("activo", "eq.true")
             }
             
+            println("DEBUG: Respuesta de búsqueda de empleado - Status: ${response.status}")
+            
             if (response.status.isSuccess()) {
                 val empleados = response.body<List<EmpleadoLoginResponse>>()
+                println("DEBUG: Empleados encontrados: ${empleados.size}")
                 
                 if (empleados.isNotEmpty()) {
                     val empleado = empleados.first()
+                    println("DEBUG: Empleado encontrado: $empleado")
                     
                     // Verificar contraseña directamente desde Supabase
                     println("DEBUG: Verificando contraseña para ${empleado.email_corporativo}")
                     println("DEBUG: Contraseña almacenada: '${empleado.password}'")
                     println("DEBUG: Contraseña ingresada: '${loginRequest.password}'")
+                    println("DEBUG: ¿Son iguales? ${empleado.password == loginRequest.password}")
                     
                     if (empleado.password == loginRequest.password) {
                         val user = User(
@@ -170,9 +176,13 @@ class DualAuthRepository {
                         AuthResult.Error("Contraseña incorrecta")
                     }
                 } else {
+                    println("DEBUG: No se encontraron empleados con ese email")
                     AuthResult.Error("Empleado no encontrado o inactivo")
                 }
             } else {
+                println("DEBUG: Error en respuesta de Supabase: ${response.status}")
+                val errorBody = response.bodyAsText()
+                println("DEBUG: Error body: $errorBody")
                 AuthResult.Error("Error al buscar empleado")
             }
             
