@@ -83,6 +83,58 @@ class SupabaseStorageManager {
 
     
     /**
+     * Sube una imagen de producto a Supabase Storage
+     */
+    suspend fun subirImagenProducto(uri: Uri, context: Context): String? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val timestamp = System.currentTimeMillis()
+                val fileName = "producto_$timestamp.jpg"
+                
+                // Obtener bytes de la imagen
+                val inputStream = context.contentResolver.openInputStream(uri)
+                    ?: throw Exception("No se puede abrir el archivo")
+                
+                val imageBytes = inputStream.readBytes()
+                inputStream.close()
+                
+                // Usar FormData multipart
+                val requestBody = MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart(
+                        "file", 
+                        fileName,
+                        imageBytes.toRequestBody("image/jpeg".toMediaType())
+                    )
+                    .build()
+                
+                val request = Request.Builder()
+                    .url("https://xjqjlllzbcrpcylhnlmh.supabase.co/storage/v1/object/productos/$fileName")
+                    .post(requestBody)
+                    .addHeader("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcWpsbGx6YmNycGN5bGhubG1oIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODk0NjgxMSwiZXhwIjoyMDc0NTIyODExfQ.4c5oU47ZA7FYyVwlrVVY6_sL9cLr5pMeEs6E5R4yspE")
+                    .addHeader("apikey", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcWpsbGx6YmNycGN5bGhubG1oIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODk0NjgxMSwiZXhwIjoyMDc0NTIyODExfQ.4c5oU47ZA7FYyVwlrVVY6_sL9cLr5pMeEs6E5R4yspE")
+                    .build()
+                
+                // Ejecutar request
+                client.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        // Generar URL pública
+                        val publicUrl = "https://xjqjlllzbcrpcylhnlmh.supabase.co/storage/v1/object/public/productos/$fileName"
+                        publicUrl
+                    } else {
+                        Log.w("SupabaseStorage", "Error subiendo imagen de producto: ${response.code}")
+                        null
+                    }
+                }
+                
+            } catch (e: Exception) {
+                Log.w("SupabaseStorage", "Error subiendo imagen de producto", e)
+                null
+            }
+        }
+    }
+
+    /**
      * Elimina una imagen de Supabase Storage
      */
     suspend fun eliminarImagen(fileName: String): Boolean {
