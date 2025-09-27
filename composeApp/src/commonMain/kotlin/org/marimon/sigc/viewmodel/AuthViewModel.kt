@@ -72,4 +72,12 @@ class AuthViewModel : ViewModel() {
             _authState.value = AuthResult.Error("")
         }
     }
+    
+    fun setLoggedInUser(user: User) {
+        println("DEBUG: AuthViewModel - setLoggedInUser llamado con: $user")
+        _isLoggedIn.value = true
+        _currentUser.value = user
+        _authState.value = AuthResult.Success(user)
+        println("DEBUG: AuthViewModel - Estado configurado - isLoggedIn: true, currentUser: $user")
+    }
 }
