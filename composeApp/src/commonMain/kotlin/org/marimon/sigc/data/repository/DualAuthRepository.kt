@@ -43,6 +43,7 @@ data class EmpleadoLoginResponse(
     val email_corporativo: String,
     val area_id: Int,
     val area_nombre: String,
+    val password: String,
     val imagen_url: String? = null,
     val activo: Boolean = true
 )
@@ -147,9 +148,12 @@ class DualAuthRepository {
                 if (empleados.isNotEmpty()) {
                     val empleado = empleados.first()
                     
-                    // Verificar contraseña (en un sistema real, esto debería ser hash)
-                    // Por ahora, usamos una verificación simple
-                    if (verifyEmployeePassword(empleado.email_corporativo, loginRequest.password)) {
+                    // Verificar contraseña directamente desde Supabase
+                    println("DEBUG: Verificando contraseña para ${empleado.email_corporativo}")
+                    println("DEBUG: Contraseña almacenada: '${empleado.password}'")
+                    println("DEBUG: Contraseña ingresada: '${loginRequest.password}'")
+                    
+                    if (empleado.password == loginRequest.password) {
                         val user = User(
                             id = empleado.id.toString(),
                             username = empleado.nombre,
@@ -177,13 +181,6 @@ class DualAuthRepository {
         }
     }
     
-    private fun verifyEmployeePassword(email: String, password: String): Boolean {
-        // En un sistema real, aquí deberías verificar el hash de la contraseña
-        // Por ahora, usamos una lógica simple para demostración
-        // La contraseña por defecto será el email sin el dominio + "123"
-        val defaultPassword = email.split("@").first() + "123"
-        return password == defaultPassword
-    }
     
     suspend fun logout(): AuthResult {
         return try {

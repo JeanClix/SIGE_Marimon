@@ -119,6 +119,8 @@ class EmpleadoViewModel : ViewModel() {
                         "activo": ${empleado.activo}
                     }
                 """.trimIndent()
+                
+                println("DEBUG: Enviando contraseña a Supabase: '${empleado.password}'")
 
                 println("DEBUG: Enviando request a Supabase: $url")
                 println("DEBUG: Body: $body")
