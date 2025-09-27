@@ -14,6 +14,10 @@ fun AppNavigation(authViewModel: AuthViewModel) {
     val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
     val currentUser by authViewModel.currentUser.collectAsState()
     
+    println("DEBUG: AppNavigation - isLoggedIn: $isLoggedIn")
+    println("DEBUG: AppNavigation - currentUser: $currentUser")
+    println("DEBUG: AppNavigation - user role: ${currentUser?.role}")
+    
     if (isLoggedIn) {
         // Redirigir según el rol del usuario
         when (currentUser?.role) {

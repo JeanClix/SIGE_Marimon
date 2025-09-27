@@ -23,6 +23,9 @@ fun EmployeeScreen(
 ) {
     val currentUser by authViewModel.currentUser.collectAsState()
     
+    println("DEBUG: EmployeeScreen - Usuario actual: $currentUser")
+    println("DEBUG: EmployeeScreen - Rol: ${currentUser?.role}")
+    
     Scaffold(
         topBar = {
             TopAppBar(
@@ -35,6 +38,7 @@ fun EmployeeScreen(
                 },
                 actions = {
                     TextButton(onClick = { 
+                        println("DEBUG: EmployeeScreen - Botón cerrar sesión presionado")
                         authViewModel.logout()
                         onLogout()
                     }) {
@@ -57,6 +61,7 @@ fun EmployeeScreen(
         ) {
             // Información del empleado
             item {
+                println("DEBUG: EmployeeScreen - Mostrando información del empleado")
                 EmployeeInfoCard(user = currentUser)
             }
             

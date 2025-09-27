@@ -176,6 +176,10 @@ class DualAuthRepository {
                             updatedAt = null
                         )
                         
+                        println("DEBUG: Usuario empleado creado: $user")
+                        println("DEBUG: Rol asignado: ${user.role}")
+                        println("DEBUG: ¿Es EMPLOYEE? ${user.role == UserRole.EMPLOYEE}")
+                        
                         AuthResult.Success(user)
                     } else {
                         AuthResult.Error("Contraseña incorrecta")
