@@ -80,6 +80,7 @@ fun AppNavigation(authViewModel: AuthViewModel) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminSimpleView(authViewModel: AuthViewModel) {
     val currentUser by authViewModel.currentUser.collectAsState()
