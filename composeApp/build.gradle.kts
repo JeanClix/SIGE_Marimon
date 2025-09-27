@@ -104,5 +104,7 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+    implementation("com.google.firebase:firebase-storage-ktx:20.2.1")
+    implementation("com.google.firebase:firebase-auth-ktx:22.3.0")
+    implementation("com.google.firebase:firebase-common-ktx:20.4.0")
 }
-
