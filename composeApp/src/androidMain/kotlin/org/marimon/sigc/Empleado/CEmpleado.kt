@@ -38,17 +38,10 @@ fun CrearEmpleadoDialog(
     var nombre by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
     var areaSeleccionada by remember { mutableStateOf(if (areas.isNotEmpty()) areas.first() else null) }
-    var expanded by remember { mutableStateOf(false) }
 
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val imagenState = rememberImagenEmpleadoState(scope = scope)
-
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let { imagenState.subirImagen(it, context) }
-    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -76,94 +69,24 @@ fun CrearEmpleadoDialog(
             Text("Crear Nuevo Empleado", style = MaterialTheme.typography.titleLarge)
         },
         text = {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                // Imagen usando el componente optimizado
-                ImagenEmpleado(
-                    imagenUrl = imagenState.imagenUrl,
-                    imagenUri = imagenState.imagenUri,
-                    subiendo = imagenState.subiendo,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                
-                Button(
-                    onClick = { launcher.launch("image/*") }, 
-                    modifier = Modifier.padding(bottom = 16.dp), 
-                    enabled = !imagenState.subiendo
-                ) {
-                    Text(if (imagenState.subiendo) "Subiendo..." else "Seleccionar imagen")
-                }
-
-                // Mensaje de estado usando el componente optimizado
-                MensajeEstado(mensaje = imagenState.mensajeEstado)
-
-                OutlinedTextField(
-                    value = nombre,
-                    onValueChange = { nombre = it },
-                    label = { Text("Nombre completo") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
-                )
-                
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Email corporativo") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
-                )
-                
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Contraseña") },
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        TextButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Text(
-                                text = if (passwordVisible) "👁️" else "🔒",
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
-                )
-                
-
-                
-                // Selector de área
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = areaSeleccionada?.nombre ?: "Seleccionar área",
-                        onValueChange = {},
-                        label = { Text("Área de trabajo") },
-                        modifier = Modifier.fillMaxWidth(),
-                        readOnly = true,
-                        trailingIcon = {
-                            IconButton(onClick = { expanded = !expanded }) {
-                                Icon(Icons.Default.ArrowDropDown, contentDescription = null)
-                            }
-                        }
+            FormularioBaseEmpleado(
+                nombre = nombre,
+                onNombreChange = { nombre = it },
+                email = email,
+                onEmailChange = { email = it },
+                areas = areas,
+                areaSeleccionada = areaSeleccionada,
+                onAreaSeleccionada = { areaSeleccionada = it },
+                imagenState = imagenState,
+                textoBotonImagen = "Seleccionar imagen",
+                camposAdicionales = {
+                    CampoContrasenaEmpleado(
+                        valor = password,
+                        onValueChange = { password = it },
+                        label = "Contraseña"
                     )
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        areas.forEach { area ->
-                            DropdownMenuItem(
-                                text = { Text(area.nombre) },
-                                onClick = {
-                                    areaSeleccionada = area
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
                 }
-            }
+            )
         },
         containerColor = Color.White
     )
@@ -180,18 +103,12 @@ fun EditarEmpleadoDialog(
     var email by remember { mutableStateOf(empleado.emailCorporativo) }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    var confirmPasswordVisible by remember { mutableStateOf(false) }
     var areaSeleccionada by remember { mutableStateOf(areas.find { it.id == empleado.areaId } ?: areas.firstOrNull()) }
-    var expanded by remember { mutableStateOf(false) }
+    var mostrarConfirmacion by remember { mutableStateOf(false) }
+    var empleadoParaActualizar by remember { mutableStateOf<Empleado?>(null) }
 
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val imagenState = rememberImagenEmpleadoState(urlInicial = empleado.imagenUrl, scope = scope)
-
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let { imagenState.subirImagen(it, context) }
-    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -209,7 +126,8 @@ fun EditarEmpleadoDialog(
                             activo = empleado.activo,
                             password = password.ifBlank { empleado.password }
                         )
-                        onConfirm(empleadoEditado)
+                        empleadoParaActualizar = empleadoEditado
+                        mostrarConfirmacion = true
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
@@ -229,122 +147,47 @@ fun EditarEmpleadoDialog(
             Text("Editar Empleado", style = MaterialTheme.typography.titleLarge)
         },
         text = {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                // Imagen usando el componente optimizado
-                ImagenEmpleado(
-                    imagenUrl = imagenState.imagenUrl,
-                    imagenUri = imagenState.imagenUri,
-                    subiendo = imagenState.subiendo,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                
-                Button(
-                    onClick = { launcher.launch("image/*") }, 
-                    modifier = Modifier.padding(bottom = 16.dp), 
-                    enabled = !imagenState.subiendo
-                ) {
-                    Text(if (imagenState.subiendo) "Subiendo..." else "Cambiar Imagen")
-                }
+            FormularioBaseEmpleado(
+                nombre = nombre,
+                onNombreChange = { nombre = it },
+                email = email,
+                onEmailChange = { email = it },
+                areas = areas,
+                areaSeleccionada = areaSeleccionada,
+                onAreaSeleccionada = { areaSeleccionada = it },
+                imagenState = imagenState,
+                textoBotonImagen = "Cambiar Imagen",
+                camposAdicionales = {
+                    CampoContrasenaEmpleado(
+                        valor = password,
+                        onValueChange = { password = it },
+                        label = "Nueva contraseña (opcional)",
+                        placeholder = "Dejar vacío para mantener actual"
+                    )
 
-                // Mensaje de estado usando el componente optimizado
-                MensajeEstado(mensaje = imagenState.mensajeEstado)
-
-                OutlinedTextField(
-                    value = nombre,
-                    onValueChange = { nombre = it },
-                    label = { Text("Nombre completo") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
-                )
-                
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Email corporativo") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
-                )
-                
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Nueva contraseña (opcional)") },
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        TextButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Text(
-                                text = if (passwordVisible) "👁️" else "🔒",
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
-                    },
-                    placeholder = { Text("Dejar vacío para mantener actual") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
-                )
-                
-                if (password.isNotBlank()) {
-                    OutlinedTextField(
-                        value = confirmPassword,
-                        onValueChange = { confirmPassword = it },
-                        label = { Text("Confirmar nueva contraseña") },
-                        visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        trailingIcon = {
-                            TextButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
-                                Text(
-                                    text = if (confirmPasswordVisible) "👁️" else "🔒",
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                            }
-                        },
-                        isError = password != confirmPassword,
-                        supportingText = {
-                            if (password != confirmPassword) {
-                                Text(
-                                    text = "Las contraseñas no coinciden",
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp)
+                    CampoConfirmacionContrasena(
+                        password = password,
+                        confirmPassword = confirmPassword,
+                        onConfirmPasswordChange = { confirmPassword = it }
                     )
                 }
-                
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = areaSeleccionada?.nombre ?: "Seleccionar área",
-                        onValueChange = {},
-                        label = { Text("Área de trabajo") },
-                        modifier = Modifier.fillMaxWidth(),
-                        readOnly = true,
-                        trailingIcon = {
-                            IconButton(onClick = { expanded = !expanded }) {
-                                Icon(Icons.Default.ArrowDropDown, contentDescription = null)
-                            }
-                        }
-                    )
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        areas.forEach { area ->
-                            DropdownMenuItem(
-                                text = { Text(area.nombre) },
-                                onClick = {
-                                    areaSeleccionada = area
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
+            )
         },
         containerColor = Color.White
     )
+
+    // Modal de confirmación para actualizar
+    if (mostrarConfirmacion && empleadoParaActualizar != null) {
+        DialogoConfirmarActualizacion(
+            empleado = empleadoParaActualizar!!,
+            onConfirmar = {
+                mostrarConfirmacion = false
+                onConfirm(empleadoParaActualizar!!)
+            },
+            onCancelar = {
+                mostrarConfirmacion = false
+                empleadoParaActualizar = null
+            }
+        )
+    }
 }

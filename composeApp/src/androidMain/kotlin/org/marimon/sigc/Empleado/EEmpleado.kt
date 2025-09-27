@@ -244,13 +244,39 @@ fun MensajeEstado(
 }
 
 /**
- * Diálogo de confirmación para eliminar empleado
+ * Componente reutilizable para iconos de diálogos
  */
 @Composable
-fun DialogoConfirmarEliminacion(
-    empleado: Empleado,
+fun IconoDialog(
+    icono: @Composable () -> Unit,
+    backgroundColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .size(80.dp)
+            .background(backgroundColor, CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        icono()
+    }
+}
+
+/**
+ * Componente base para estructura de diálogos de confirmación
+ */
+@Composable
+fun EstructuraDialogoConfirmacion(
+    icono: @Composable () -> Unit,
+    colorIcono: Color,
+    titulo: String,
+    mensaje: String,
+    contenidoAdicional: @Composable ColumnScope.() -> Unit = {},
     onConfirmar: () -> Unit,
-    onCancelar: () -> Unit
+    onCancelar: () -> Unit,
+    textoConfirmar: String = "Confirmar",
+    textoCancelar: String = "Cancelar",
+    habilitado: Boolean = true
 ) {
     Dialog(onDismissRequest = onCancelar) {
         Card(
@@ -267,22 +293,13 @@ fun DialogoConfirmarEliminacion(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .background(Color(0xFFE91E63), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Eliminar",
-                        tint = Color.White,
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
+                IconoDialog(
+                    icono = icono,
+                    backgroundColor = colorIcono
+                )
 
                 Text(
-                    text = "¿Eliminar Empleado?",
+                    text = titulo,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black,
@@ -290,55 +307,128 @@ fun DialogoConfirmarEliminacion(
                 )
 
                 Text(
-                    text = "¿Estás seguro que deseas eliminar a ${empleado.nombre}?",
+                    text = mensaje,
                     fontSize = 14.sp,
                     color = Color.Gray,
                     textAlign = TextAlign.Center
                 )
 
-                Text(
-                    text = "Esta acción no se puede deshacer",
-                    fontSize = 12.sp,
-                    color = Color(0xFFE91E63),
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Medium
+                contenidoAdicional()
+
+                BotonesAccionDialog(
+                    onConfirmar = onConfirmar,
+                    onCancelar = onCancelar,
+                    textoConfirmar = textoConfirmar,
+                    textoCancelar = textoCancelar,
+                    habilitado = habilitado
                 )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Button(
-                        onClick = onCancelar,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(50.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.LightGray
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text("Cancelar", color = Color.Black, fontSize = 16.sp)
-                    }
-
-                    Button(
-                        onClick = onConfirmar,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(50.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFE91E63)
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text("Eliminar", color = Color.White, fontSize = 16.sp)
-                    }
-                }
             }
         }
     }
+}
+
+/**
+ * Diálogo de confirmación para eliminar empleado
+ */
+@Composable
+fun DialogoConfirmarEliminacion(
+    empleado: Empleado,
+    onConfirmar: () -> Unit,
+    onCancelar: () -> Unit
+) {
+    EstructuraDialogoConfirmacion(
+        icono = {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "Eliminar",
+                tint = Color.White,
+                modifier = Modifier.size(40.dp)
+            )
+        },
+        colorIcono = Color(0xFFDC143C),
+        titulo = "¿Eliminar Empleado?",
+        mensaje = "¿Estás seguro que deseas eliminar a ${empleado.nombre}?",
+        contenidoAdicional = {
+            Text(
+                text = "Esta acción no se puede deshacer",
+                fontSize = 12.sp,
+                color = Color(0xFFDC143C),
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Medium
+            )
+        },
+        onConfirmar = onConfirmar,
+        onCancelar = onCancelar,
+        textoConfirmar = "Eliminar",
+        textoCancelar = "Cancelar"
+    )
+}
+
+/**
+ * Diálogo de confirmación para actualizar empleado
+ */
+@Composable
+fun DialogoConfirmarActualizacion(
+    empleado: Empleado,
+    onConfirmar: () -> Unit,
+    onCancelar: () -> Unit
+) {
+    EstructuraDialogoConfirmacion(
+        icono = {
+            Text("✓", color = Color.White, fontSize = 40.sp, fontWeight = FontWeight.Bold)
+        },
+        colorIcono = Color(0xFFDC143C),
+        titulo = "¿Actualizar Empleado?",
+        mensaje = "¿Estás seguro que deseas actualizar los datos de ${empleado.nombre}?",
+        contenidoAdicional = {
+            // Mostrar datos del empleado a actualizar
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFF5F5F5), RoundedCornerShape(12.dp))
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ImagenEmpleado(
+                    imagenUrl = empleado.imagenUrl,
+                    size = 50.dp
+                )
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column {
+                    Text(
+                        text = empleado.nombre,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                    Text(
+                        text = empleado.emailCorporativo,
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                    Text(
+                        text = empleado.areaNombre,
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                }
+            }
+
+            Text(
+                text = "Los cambios se aplicarán inmediatamente",
+                fontSize = 12.sp,
+                color = Color(0xFFDC143C),
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Medium
+            )
+        },
+        onConfirmar = onConfirmar,
+        onCancelar = onCancelar,
+        textoConfirmar = "Aplicar",
+        textoCancelar = "Cancelar"
+    )
 }
 
 /**
@@ -380,7 +470,7 @@ fun DialogoExitoEmpleado(
                 }
 
                 Text(
-                    text = if (esCreacion) "¡Empleado Creado!" else "¡Datos Actualizados!",
+                    text = if (esCreacion) "¡Empleado Creado!" else "¡Éxito!",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black,
@@ -391,7 +481,7 @@ fun DialogoExitoEmpleado(
                     text = if (esCreacion)
                         "El empleado se ha creado correctamente en el sistema"
                     else
-                        "Los datos del empleado se han actualizado correctamente en el sistema",
+                        "Los Datos del Empleado se Editaron Exitosamente",
                     fontSize = 14.sp,
                     color = Color.Gray,
                     textAlign = TextAlign.Center
@@ -425,6 +515,19 @@ fun DialogoExitoEmpleado(
                         )
                     }
                 }
+
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Black
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Salir", color = Color.White, fontSize = 16.sp)
+                }
             }
         }
     }
@@ -455,7 +558,7 @@ fun DialogoEliminacionExitosa(
                 Box(
                     modifier = Modifier
                         .size(80.dp)
-                        .background(Color(0xFFE91E63), CircleShape),
+                        .background(Color(0xFFDC143C), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -487,7 +590,7 @@ fun DialogoEliminacionExitosa(
                         .fillMaxWidth()
                         .height(50.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFE91E63)
+                        containerColor = Color.Black
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
