@@ -69,9 +69,11 @@ fun MainScreen() {
                 .padding(innerPadding)
         ) {
             when (selectedTab) {
-                0 -> HomeScreen()
+                0 -> CatalogoProductosScreen(
+                    onNavigateToRegister = { selectedTab = 1 }
+                )
                 1 -> RegistrarProductoScreen(
-                    onNavigateToHome = { selectedTab = 0 }  // <-- ESTA ES LA LÍNEA CLAVE
+                    onNavigateToHome = { selectedTab = 0 }
                 )
                 2 -> AjustesScreen()
             }
