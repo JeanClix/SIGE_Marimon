@@ -25,6 +25,40 @@ class MainActivity : ComponentActivity() {
         setContent {
             // Usar nuestro sistema de navegación dual en lugar del sistema Android original
             val authViewModel = remember { AuthViewModel() }
+            
+            // Configurar el estado del usuario si viene del LoginActivity
+            LaunchedEffect(Unit) {
+                val userId = intent.getStringExtra("user_id")
+                val userEmail = intent.getStringExtra("user_email")
+                val userName = intent.getStringExtra("user_name")
+                val userRole = intent.getStringExtra("user_role")
+                
+                println("DEBUG: MainActivity - Datos recibidos del LoginActivity:")
+                println("DEBUG: MainActivity - userId: $userId")
+                println("DEBUG: MainActivity - userEmail: $userEmail")
+                println("DEBUG: MainActivity - userName: $userName")
+                println("DEBUG: MainActivity - userRole: $userRole")
+                
+                if (userId != null && userEmail != null && userName != null && userRole != null) {
+                    // Crear usuario con los datos recibidos
+                    val user = org.marimon.sigc.data.model.User(
+                        id = userId,
+                        username = userName,
+                        email = userEmail,
+                        firstName = userName,
+                        lastName = "",
+                        role = if (userRole == "ADMIN") org.marimon.sigc.data.model.UserRole.ADMIN else org.marimon.sigc.data.model.UserRole.EMPLOYEE,
+                        createdAt = null,
+                        updatedAt = null
+                    )
+                    
+                    println("DEBUG: MainActivity - Usuario creado: $user")
+                    
+                    // Configurar el estado del AuthViewModel
+                    authViewModel.setLoggedInUser(user)
+                }
+            }
+            
             AppNavigation(authViewModel = authViewModel)
         }
     }

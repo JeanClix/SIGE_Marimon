@@ -31,11 +31,14 @@ class AuthViewModel : ViewModel() {
     
     private fun checkCurrentSession() {
         viewModelScope.launch {
+            println("DEBUG: AuthViewModel - checkCurrentSession iniciado")
             val loggedIn = authRepository.isLoggedIn()
+            println("DEBUG: AuthViewModel - checkCurrentSession - loggedIn: $loggedIn")
             _isLoggedIn.value = loggedIn
-            
+
             if (loggedIn) {
                 val user = authRepository.getCurrentUser()
+                println("DEBUG: AuthViewModel - checkCurrentSession - user: $user")
                 _currentUser.value = user
             }
         }
@@ -80,5 +83,13 @@ class AuthViewModel : ViewModel() {
         if (_authState.value is AuthResult.Error) {
             _authState.value = AuthResult.Error("")
         }
+    }
+    
+    fun setLoggedInUser(user: User) {
+        println("DEBUG: AuthViewModel - setLoggedInUser llamado con: $user")
+        _isLoggedIn.value = true
+        _currentUser.value = user
+        _authState.value = AuthResult.Success(user)
+        println("DEBUG: AuthViewModel - Estado configurado - isLoggedIn: true, currentUser: $user")
     }
 }

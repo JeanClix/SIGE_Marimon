@@ -40,7 +40,9 @@ fun LoginScreen(
     
     // Observar cambios en el estado de autenticación
     LaunchedEffect(isLoggedIn) {
+        println("DEBUG: LoginScreen - LaunchedEffect isLoggedIn: $isLoggedIn")
         if (isLoggedIn) {
+            println("DEBUG: LoginScreen - Llamando onLoginSuccess")
             onLoginSuccess()
         }
     }
