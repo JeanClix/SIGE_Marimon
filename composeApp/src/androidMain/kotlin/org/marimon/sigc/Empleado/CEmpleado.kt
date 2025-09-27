@@ -1,41 +1,44 @@
 package org.marimon.sigc.Empleado
 
-import androidx.compose.runtime.Composable
+import android.net.Uri
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.runtime.*
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import org.marimon.sigc.storage.SupabaseStorageManager
-import kotlinx.coroutines.launch
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import android.util.Log
 import androidx.compose.ui.platform.LocalContext
-import org.marimon.sigc.model.Area
-import org.marimon.sigc.model.Empleado
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import androidx.compose.foundation.background
-import androidx.compose.material3.CircularProgressIndicator
+import kotlinx.coroutines.launch
+import org.marimon.sigc.model.Area
+import org.marimon.sigc.model.Empleado
+import org.marimon.sigc.storage.SupabaseStorageManager
 
 @Composable
 fun CrearEmpleadoDialog(
     areas: List<Area>,
     onDismiss: () -> Unit,
-    onConfirm: (String, String, Int, String?) -> Unit
+    onConfirm: (String, String, Int, String?, String?) -> Unit
 ) {
     var nombre by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
     var areaSeleccionada by remember { mutableStateOf(if (areas.isNotEmpty()) areas.first() else null) }
     var expanded by remember { mutableStateOf(false) }
 
@@ -53,11 +56,13 @@ fun CrearEmpleadoDialog(
             Button(
                 onClick = {
                     areaSeleccionada?.let { area ->
-                        onConfirm(nombre, email, area.id, imagenState.imagenUrl)
+                        onConfirm(nombre, email, area.id, imagenState.imagenUrl, password.ifBlank { null })
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
-                enabled = !imagenState.subiendo && nombre.isNotBlank() && email.isNotBlank() && areaSeleccionada != null
+                enabled = !imagenState.subiendo && nombre.isNotBlank() && email.isNotBlank() && 
+                         areaSeleccionada != null && 
+                         (password.isBlank() || password.length >= 6)
             ) {
                 Text("Confirmar", color = Color.White)
             }
@@ -109,6 +114,26 @@ fun CrearEmpleadoDialog(
                         .padding(bottom = 8.dp)
                 )
                 
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Contraseña") },
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        TextButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Text(
+                                text = if (passwordVisible) "👁️" else "🔒",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                )
+                
+
+                
                 // Selector de área
                 Box(modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
@@ -153,6 +178,10 @@ fun EditarEmpleadoDialog(
 ) {
     var nombre by remember { mutableStateOf(empleado.nombre) }
     var email by remember { mutableStateOf(empleado.emailCorporativo) }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
     var areaSeleccionada by remember { mutableStateOf(areas.find { it.id == empleado.areaId } ?: areas.firstOrNull()) }
     var expanded by remember { mutableStateOf(false) }
 
@@ -177,13 +206,16 @@ fun EditarEmpleadoDialog(
                             areaId = area.id,
                             areaNombre = area.nombre,
                             imagenUrl = imagenState.imagenUrl,
-                            activo = empleado.activo
+                            activo = empleado.activo,
+                            password = password.ifBlank { empleado.password }
                         )
                         onConfirm(empleadoEditado)
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
-                enabled = !imagenState.subiendo && nombre.isNotBlank() && email.isNotBlank() && areaSeleccionada != null
+                enabled = !imagenState.subiendo && nombre.isNotBlank() && email.isNotBlank() && 
+                         areaSeleccionada != null && 
+                         (password.isBlank() || (password == confirmPassword && password.length >= 6))
             ) {
                 Text("Actualizar", color = Color.White)
             }
@@ -234,6 +266,54 @@ fun EditarEmpleadoDialog(
                         .fillMaxWidth()
                         .padding(bottom = 8.dp)
                 )
+                
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Nueva contraseña (opcional)") },
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        TextButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Text(
+                                text = if (passwordVisible) "👁️" else "🔒",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    },
+                    placeholder = { Text("Dejar vacío para mantener actual") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                )
+                
+                if (password.isNotBlank()) {
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = { confirmPassword = it },
+                        label = { Text("Confirmar nueva contraseña") },
+                        visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            TextButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                                Text(
+                                    text = if (confirmPasswordVisible) "👁️" else "🔒",
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
+                        },
+                        isError = password != confirmPassword,
+                        supportingText = {
+                            if (password != confirmPassword) {
+                                Text(
+                                    text = "Las contraseñas no coinciden",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                    )
+                }
                 
                 Box(modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(

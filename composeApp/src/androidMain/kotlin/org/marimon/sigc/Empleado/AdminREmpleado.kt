@@ -201,13 +201,14 @@ fun EmpleadoListScreen(
             CrearEmpleadoDialog(
                 areas = areas,
                 onDismiss = { showDialog = false },
-                onConfirm = { nombre, email, areaId, urlImagen ->
+                onConfirm = { nombre, email, areaId, urlImagen, password ->
                     val nuevoEmpleado = EmpleadoCreate(
                         nombre = nombre,
                         emailCorporativo = email,
                         areaId = areaId,
                         imagenUrl = urlImagen,
-                        activo = true
+                        activo = true,
+                        password = password
                     )
                     empleadoViewModel.crearEmpleado(
                         empleado = nuevoEmpleado,
@@ -222,7 +223,8 @@ fun EmpleadoListScreen(
                                 areaId = areaId,
                                 areaNombre = areas.find { it.id == areaId }?.nombre ?: "",
                                 activo = true,
-                                imagenUrl = urlImagen
+                                imagenUrl = urlImagen,
+                                password = password
                             )
                             showSuccessCreateDialog = true
                         },

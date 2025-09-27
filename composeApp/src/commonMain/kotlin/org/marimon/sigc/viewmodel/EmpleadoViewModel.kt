@@ -52,7 +52,8 @@ class EmpleadoViewModel : ViewModel() {
                             areaId = areaId,
                             areaNombre = areaNombre,
                             activo = obj["activo"]!!.toString().toBoolean(),
-                            imagenUrl = obj["imagen_url"]?.toString()?.replace("\"", "")?.trim()
+                            imagenUrl = obj["imagen_url"]?.toString()?.replace("\"", "")?.trim(),
+                            password = obj["password"]?.toString()?.replace("\"", "")?.trim()
                         )
                     )
                 }
@@ -111,7 +112,8 @@ class EmpleadoViewModel : ViewModel() {
                         "email_corporativo": "${empleado.emailCorporativo}",
                         "area_id": ${empleado.areaId},
                         "imagen_url": ${if (empleado.imagenUrl != null) "\"${empleado.imagenUrl}\"" else "null"},
-                        "activo": ${empleado.activo}
+                        "activo": ${empleado.activo},
+                        "password": ${if (empleado.password != null) "\"${empleado.password}\"" else "null"}
                     }
                 """.trimIndent()
 
@@ -148,7 +150,8 @@ class EmpleadoViewModel : ViewModel() {
                         "email_corporativo": "${empleado.emailCorporativo}",
                         "area_id": ${empleado.areaId},
                         "imagen_url": ${if (empleado.imagenUrl != null) "\"${empleado.imagenUrl}\"" else "null"},
-                        "activo": ${empleado.activo}
+                        "activo": ${empleado.activo},
+                        "password": ${if (empleado.password != null) "\"${empleado.password}\"" else "null"}
                     }
                 """.trimIndent()
 

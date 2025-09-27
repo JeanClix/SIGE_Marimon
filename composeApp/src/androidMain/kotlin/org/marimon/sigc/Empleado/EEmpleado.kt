@@ -143,7 +143,32 @@ fun ImagenEmpleado(
                     contentScale = ContentScale.Crop
                 )
             }
-            // Imagen desde URI local
+            // Imagen desde path local (fallback)
+            imagenUrl != null && !imagenUrl.startsWith("http") -> {
+                val localFile = java.io.File(imagenUrl)
+                if (localFile.exists()) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(localFile)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = "Imagen de empleado (local)",
+                        modifier = Modifier
+                            .size(size)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    // Si el archivo local no existe, mostrar placeholder
+                    Icon(
+                        Icons.Default.AccountCircle,
+                        contentDescription = null,
+                        modifier = Modifier.size(size),
+                        tint = Color.LightGray
+                    )
+                }
+            }
+            // Imagen desde URI local (durante selección)
             imagenUri != null -> {
                 AsyncImage(
                     model = ImageRequest.Builder(context)

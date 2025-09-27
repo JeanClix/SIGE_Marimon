@@ -7,7 +7,8 @@ data class Empleado(
     val areaId: Int,
     val areaNombre: String,
     val imagenUrl: String? = null,
-    val activo: Boolean = true
+    val activo: Boolean = true,
+    val password: String? = null
 )
 
 // DTO para crear empleado
@@ -16,6 +17,7 @@ data class EmpleadoCreate(
     val emailCorporativo: String,
     val areaId: Int,
     val imagenUrl: String? = null,
-    val activo: Boolean = true
+    val activo: Boolean = true,
+    val password: String? = null
 )
 
