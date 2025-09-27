@@ -31,6 +31,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val authViewModel = remember { AuthViewModel() }
             val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
+            val currentUser by authViewModel.currentUser.collectAsState()
             
             LaunchedEffect(Unit) {
                 val userId = intent.getStringExtra("user_id")
@@ -64,7 +65,9 @@ class MainActivity : ComponentActivity() {
             
             // Manejar logout - volver a LoginActivity
             LaunchedEffect(isLoggedIn) {
-                if (!isLoggedIn) {
+                // Solo ejecutar logout si el usuario estaba logueado y ahora no lo está
+                // Evitar ejecutar en el estado inicial cuando isLoggedIn es false
+                if (!isLoggedIn && currentUser != null) {
                     println("DEBUG: MainActivity - Usuario deslogueado, volviendo a LoginActivity")
                     val intent = Intent(this@MainActivity, LoginActivity::class.java)
                     startActivity(intent)
