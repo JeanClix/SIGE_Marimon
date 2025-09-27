@@ -23,6 +23,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import kotlinx.coroutines.delay
 
 @Preview
 @Composable
@@ -181,7 +182,7 @@ fun ProductoListScreen(
         
         if (mostrarMensaje) {
             LaunchedEffect(mostrarMensaje) {
-                kotlinx.coroutines.delay(3000)
+                delay(3000)
                 mostrarMensaje = false
             }
             Card(

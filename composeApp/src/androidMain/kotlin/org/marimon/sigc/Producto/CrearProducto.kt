@@ -25,6 +25,7 @@ import androidx.compose.foundation.background
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import java.io.File
 
 @Composable
 fun CrearProductoDialog(
@@ -64,12 +65,12 @@ fun CrearProductoDialog(
                             val timestamp = System.currentTimeMillis()
                             val fileName = "producto_$timestamp.jpg"
                             val filesDir = context.filesDir
-                            val productosDir = java.io.File(filesDir, "productos")
+                            val productosDir = File(filesDir, "productos")
                             if (!productosDir.exists()) {
                                 productosDir.mkdirs()
                             }
                             
-                            val localFile = java.io.File(productosDir, fileName)
+                            val localFile = File(productosDir, fileName)
                             val inputStream = context.contentResolver.openInputStream(uri)
                             val outputStream = localFile.outputStream()
                             
