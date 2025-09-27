@@ -105,7 +105,7 @@ fun EmployeeScreen(
             }
             
             items(getEmployeeMenuItems()) { menuItem ->
-                MenuItemCard(
+                EmployeeMenuItemCard(
                     title = menuItem.title,
                     description = menuItem.description,
                     emoji = menuItem.emoji,
@@ -160,7 +160,7 @@ fun EmployeeInfoCard(user: User?) {
 }
 
 @Composable
-fun MenuItemCard(
+fun EmployeeMenuItemCard(
     title: String,
     description: String,
     emoji: String,
@@ -199,30 +199,30 @@ fun MenuItemCard(
     }
 }
 
-data class MenuItem(
+data class EmployeeMenuItem(
     val title: String,
     val description: String,
     val emoji: String
 )
 
-fun getEmployeeMenuItems(): List<MenuItem> {
+fun getEmployeeMenuItems(): List<EmployeeMenuItem> {
     return listOf(
-        MenuItem(
+        EmployeeMenuItem(
             title = "Mi Perfil",
             description = "Ver y editar mi información personal",
             emoji = "👤"
         ),
-        MenuItem(
+        EmployeeMenuItem(
             title = "Mis Tareas",
             description = "Ver las tareas asignadas",
             emoji = "📋"
         ),
-        MenuItem(
+        EmployeeMenuItem(
             title = "Reportes",
             description = "Generar reportes de mi trabajo",
             emoji = "📊"
         ),
-        MenuItem(
+        EmployeeMenuItem(
             title = "Contacto",
             description = "Información de contacto y soporte",
             emoji = "📞"

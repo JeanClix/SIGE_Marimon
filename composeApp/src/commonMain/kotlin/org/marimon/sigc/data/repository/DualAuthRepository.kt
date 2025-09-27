@@ -17,18 +17,18 @@ import org.marimon.sigc.data.model.User
 import org.marimon.sigc.data.model.UserRole
 
 @Serializable
-data class SupabaseAuthResponse(
+data class DualSupabaseAuthResponse(
     val access_token: String? = null,
     val token_type: String? = null,
     val expires_in: Int? = null,
     val refresh_token: String? = null,
-    val user: SupabaseUser? = null,
+    val user: DualSupabaseUser? = null,
     val error: String? = null,
     val error_description: String? = null
 )
 
 @Serializable
-data class SupabaseUser(
+data class DualSupabaseUser(
     val id: String,
     val email: String? = null,
     val created_at: String? = null,
@@ -101,7 +101,7 @@ class DualAuthRepository {
             }
             
             if (response.status.isSuccess()) {
-                val authResponse = response.body<SupabaseAuthResponse>()
+                val authResponse = response.body<DualSupabaseAuthResponse>()
                 
                 if (authResponse.user != null) {
                     val user = User(
