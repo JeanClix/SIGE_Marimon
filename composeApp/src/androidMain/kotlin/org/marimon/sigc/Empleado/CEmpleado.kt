@@ -38,64 +38,13 @@ fun CrearEmpleadoDialog(
     var email by remember { mutableStateOf("") }
     var areaSeleccionada by remember { mutableStateOf(if (areas.isNotEmpty()) areas.first() else null) }
     var expanded by remember { mutableStateOf(false) }
-    var imagenUri by remember { mutableStateOf<Uri?>(null) }
-    var imagenUrl by remember { mutableStateOf<String?>(null) }
-    var subiendo by remember { mutableStateOf(false) }
-    var mensajeEstado by remember { mutableStateOf("") }
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val storageManager = remember { SupabaseStorageManager() }
+    val imagenState = rememberImagenEmpleadoState(scope = scope)
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        imagenUri = uri
-        if (uri != null) {
-            subiendo = true
-            mensajeEstado = "☁️ Subiendo imagen a Supabase..."
-            
-            // Usar Supabase Storage
-            scope.launch {
-                try {
-                    val urlPublica = storageManager.subirImagen(uri, context)
-                    if (urlPublica != null) {
-                        imagenUrl = urlPublica
-                        mensajeEstado = "✅ Imagen subida a Supabase"
-                    } else {
-                        // Fallback: usar almacenamiento local si Supabase falla
-                        try {
-                            // Guardar archivo localmente
-                            val timestamp = System.currentTimeMillis()
-                            val fileName = "empleado_$timestamp.jpg"
-                            val filesDir = context.filesDir
-                            val empleadosDir = java.io.File(filesDir, "empleados")
-                            if (!empleadosDir.exists()) {
-                                empleadosDir.mkdirs()
-                            }
-                            
-                            val localFile = java.io.File(empleadosDir, fileName)
-                            val inputStream = context.contentResolver.openInputStream(uri)
-                            val outputStream = localFile.outputStream()
-                            
-                            inputStream?.use { input ->
-                                outputStream.use { output ->
-                                    input.copyTo(output)
-                                }
-                            }
-                            
-                            val localPath = localFile.absolutePath
-                            imagenUrl = localPath
-                            mensajeEstado = "⚠️ Guardado localmente"
-                        } catch (e: Exception) {
-                            mensajeEstado = "❌ Error guardando imagen"
-                        }
-                    }
-                } catch (e: Exception) {
-                    mensajeEstado = "❌ Error: ${e.localizedMessage}"
-                } finally {
-                    subiendo = false
-                }
-            }
-        }
+        uri?.let { imagenState.subirImagen(it, context) }
     }
 
     AlertDialog(
@@ -104,11 +53,11 @@ fun CrearEmpleadoDialog(
             Button(
                 onClick = {
                     areaSeleccionada?.let { area ->
-                        onConfirm(nombre, email, area.id, imagenUrl)
+                        onConfirm(nombre, email, area.id, imagenState.imagenUrl)
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
-                enabled = !subiendo && nombre.isNotBlank() && email.isNotBlank() && areaSeleccionada != null
+                enabled = !imagenState.subiendo && nombre.isNotBlank() && email.isNotBlank() && areaSeleccionada != null
             ) {
                 Text("Confirmar", color = Color.White)
             }
@@ -123,104 +72,24 @@ fun CrearEmpleadoDialog(
         },
         text = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                // Imagen seleccionada o placeholder
-                Box(
-                    modifier = Modifier
-                        .size(90.dp)
-                        .padding(bottom = 8.dp)
-                        .clip(CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    when {
-                        // Si hay URL de Supabase, mostrar imagen desde la nube
-                        imagenUrl != null && imagenUrl!!.startsWith("http") -> {
-                            AsyncImage(
-                                model = ImageRequest.Builder(context)
-                                    .data(imagenUrl)
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = "Imagen de empleado",
-                                modifier = Modifier
-                                    .size(90.dp)
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                        }
-                        // Si hay URI local, mostrar imagen local
-                        imagenUri != null -> {
-                            AsyncImage(
-                                model = ImageRequest.Builder(context)
-                                    .data(imagenUri)
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = "Imagen seleccionada",
-                                modifier = Modifier
-                                    .size(90.dp)
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                        }
-                        // Placeholder cuando no hay imagen
-                        else -> {
-                            Icon(
-                                Icons.Default.AccountCircle,
-                                contentDescription = null,
-                                modifier = Modifier.size(90.dp),
-                                tint = Color.LightGray
-                            )
-                        }
-                    }
-                    
-                    // Indicador de carga superpuesto
-                    if (subiendo) {
-                        Box(
-                            modifier = Modifier
-                                .size(90.dp)
-                                .clip(CircleShape)
-                                .background(Color.Black.copy(alpha = 0.5f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(30.dp),
-                                color = Color.White,
-                                strokeWidth = 3.dp
-                            )
-                        }
-                    }
-                }
+                // Imagen usando el componente optimizado
+                ImagenEmpleado(
+                    imagenUrl = imagenState.imagenUrl,
+                    imagenUri = imagenState.imagenUri,
+                    subiendo = imagenState.subiendo,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
                 
                 Button(
                     onClick = { launcher.launch("image/*") }, 
                     modifier = Modifier.padding(bottom = 16.dp), 
-                    enabled = !subiendo
+                    enabled = !imagenState.subiendo
                 ) {
-                    Text(if (subiendo) "Subiendo..." else "Seleccionar imagen")
+                    Text(if (imagenState.subiendo) "Subiendo..." else "Seleccionar imagen")
                 }
 
-                // Mostrar mensajes de estado si hay alguno
-                if (mensajeEstado.isNotBlank()) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (mensajeEstado.contains("✅")) {
-                                Color(0xFF4CAF50)
-                            } else if (mensajeEstado.contains("❌") || mensajeEstado.contains("Error")) {
-                                Color(0xFFE53935)
-                            } else {
-                                Color(0xFF2196F3)
-                            }
-                        )
-                    ) {
-                        Text(
-                            text = mensajeEstado,
-                            modifier = Modifier.padding(12.dp),
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }
+                // Mensaje de estado usando el componente optimizado
+                MensajeEstado(mensaje = imagenState.mensajeEstado)
 
                 OutlinedTextField(
                     value = nombre,
@@ -286,61 +155,13 @@ fun EditarEmpleadoDialog(
     var email by remember { mutableStateOf(empleado.emailCorporativo) }
     var areaSeleccionada by remember { mutableStateOf(areas.find { it.id == empleado.areaId } ?: areas.firstOrNull()) }
     var expanded by remember { mutableStateOf(false) }
-    var imagenUri by remember { mutableStateOf<Uri?>(null) }
-    var imagenUrl by remember { mutableStateOf<String?>(empleado.imagenUrl) }
-    var subiendo by remember { mutableStateOf(false) }
-    var mensajeEstado by remember { mutableStateOf("") }
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val storageManager = remember { SupabaseStorageManager() }
+    val imagenState = rememberImagenEmpleadoState(urlInicial = empleado.imagenUrl, scope = scope)
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        imagenUri = uri
-        if (uri != null) {
-            subiendo = true
-            mensajeEstado = "☁️ Subiendo imagen a Supabase..."
-            
-            scope.launch {
-                try {
-                    val urlPublica = storageManager.subirImagen(uri, context)
-                    if (urlPublica != null) {
-                        imagenUrl = urlPublica
-                        mensajeEstado = "✅ Imagen subida a Supabase"
-                    } else {
-                        try {
-                            val timestamp = System.currentTimeMillis()
-                            val fileName = "empleado_$timestamp.jpg"
-                            val filesDir = context.filesDir
-                            val empleadosDir = java.io.File(filesDir, "empleados")
-                            if (!empleadosDir.exists()) {
-                                empleadosDir.mkdirs()
-                            }
-                            
-                            val localFile = java.io.File(empleadosDir, fileName)
-                            val inputStream = context.contentResolver.openInputStream(uri)
-                            val outputStream = localFile.outputStream()
-                            
-                            inputStream?.use { input ->
-                                outputStream.use { output ->
-                                    input.copyTo(output)
-                                }
-                            }
-                            
-                            val localPath = localFile.absolutePath
-                            imagenUrl = localPath
-                            mensajeEstado = "⚠️ Guardado localmente"
-                        } catch (e: Exception) {
-                            mensajeEstado = "❌ Error guardando imagen"
-                        }
-                    }
-                } catch (e: Exception) {
-                    mensajeEstado = "❌ Error: ${e.localizedMessage}"
-                } finally {
-                    subiendo = false
-                }
-            }
-        }
+        uri?.let { imagenState.subirImagen(it, context) }
     }
 
     AlertDialog(
@@ -355,14 +176,14 @@ fun EditarEmpleadoDialog(
                             emailCorporativo = email,
                             areaId = area.id,
                             areaNombre = area.nombre,
-                            imagenUrl = imagenUrl,
+                            imagenUrl = imagenState.imagenUrl,
                             activo = empleado.activo
                         )
                         onConfirm(empleadoEditado)
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
-                enabled = !subiendo && nombre.isNotBlank() && email.isNotBlank() && areaSeleccionada != null
+                enabled = !imagenState.subiendo && nombre.isNotBlank() && email.isNotBlank() && areaSeleccionada != null
             ) {
                 Text("Actualizar", color = Color.White)
             }
@@ -377,99 +198,24 @@ fun EditarEmpleadoDialog(
         },
         text = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                // Imagen actual o nueva
-                Box(
-                    modifier = Modifier
-                        .size(90.dp)
-                        .padding(bottom = 8.dp)
-                        .clip(CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    when {
-                        imagenUrl != null && imagenUrl!!.startsWith("http") -> {
-                            AsyncImage(
-                                model = ImageRequest.Builder(context)
-                                    .data(imagenUrl)
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = "Imagen de empleado",
-                                modifier = Modifier
-                                    .size(90.dp)
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                        }
-                        imagenUri != null -> {
-                            AsyncImage(
-                                model = ImageRequest.Builder(context)
-                                    .data(imagenUri)
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = "Imagen seleccionada",
-                                modifier = Modifier
-                                    .size(90.dp)
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                        }
-                        else -> {
-                            Icon(
-                                Icons.Default.AccountCircle,
-                                contentDescription = null,
-                                modifier = Modifier.size(90.dp),
-                                tint = Color.LightGray
-                            )
-                        }
-                    }
-                    
-                    if (subiendo) {
-                        Box(
-                            modifier = Modifier
-                                .size(90.dp)
-                                .clip(CircleShape)
-                                .background(Color.Black.copy(alpha = 0.5f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(30.dp),
-                                color = Color.White,
-                                strokeWidth = 3.dp
-                            )
-                        }
-                    }
-                }
+                // Imagen usando el componente optimizado
+                ImagenEmpleado(
+                    imagenUrl = imagenState.imagenUrl,
+                    imagenUri = imagenState.imagenUri,
+                    subiendo = imagenState.subiendo,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
                 
                 Button(
                     onClick = { launcher.launch("image/*") }, 
                     modifier = Modifier.padding(bottom = 16.dp), 
-                    enabled = !subiendo
+                    enabled = !imagenState.subiendo
                 ) {
-                    Text(if (subiendo) "Subiendo..." else "Cambiar Imagen")
+                    Text(if (imagenState.subiendo) "Subiendo..." else "Cambiar Imagen")
                 }
 
-                if (mensajeEstado.isNotBlank()) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (mensajeEstado.contains("✅")) {
-                                Color(0xFF4CAF50)
-                            } else if (mensajeEstado.contains("❌") || mensajeEstado.contains("Error")) {
-                                Color(0xFFE53935)
-                            } else {
-                                Color(0xFF2196F3)
-                            }
-                        )
-                    ) {
-                        Text(
-                            text = mensajeEstado,
-                            modifier = Modifier.padding(12.dp),
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }
+                // Mensaje de estado usando el componente optimizado
+                MensajeEstado(mensaje = imagenState.mensajeEstado)
 
                 OutlinedTextField(
                     value = nombre,

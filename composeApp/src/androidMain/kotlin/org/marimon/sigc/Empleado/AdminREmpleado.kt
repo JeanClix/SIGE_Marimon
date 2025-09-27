@@ -263,320 +263,48 @@ fun EmpleadoListScreen(
             )
         }
 
-        // Diálogo confirmar eliminación
+        // Diálogo confirmar eliminación optimizado
         if (showDeleteDialog && empleadoAEliminar != null) {
-            Dialog(onDismissRequest = { showDeleteDialog = false }) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(80.dp)
-                                .background(Color(0xFFE91E63), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Eliminar",
-                                tint = Color.White,
-                                modifier = Modifier.size(40.dp)
-                            )
+            DialogoConfirmarEliminacion(
+                empleado = empleadoAEliminar!!,
+                onConfirmar = {
+                    empleadoViewModel.eliminarEmpleado(
+                        empleadoAEliminar!!.id,
+                        onSuccess = {
+                            showDeleteDialog = false
+                            showSuccessDialog = true
+                        },
+                        onError = { error ->
+                            mensaje = "❌ Error: $error"
+                            mostrarMensaje = true
                         }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            text = "¿Eliminar Empleado?",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black,
-                            textAlign = TextAlign.Center
-                        )
-
-                        Text(
-                            text = "Esta acción no se puede deshacer. El empleado será eliminado permanentemente del sistema.",
-                            fontSize = 14.sp,
-                            color = Color.Gray,
-                            textAlign = TextAlign.Center
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Color(0xFFF5F5F5), RoundedCornerShape(12.dp))
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            if (empleadoAEliminar!!.imagenUrl != null && empleadoAEliminar!!.imagenUrl!!.isNotBlank()) {
-                                AsyncImage(
-                                    model = ImageRequest.Builder(LocalContext.current)
-                                        .data(empleadoAEliminar!!.imagenUrl)
-                                        .crossfade(true)
-                                        .build(),
-                                    contentDescription = "Foto empleado",
-                                    modifier = Modifier
-                                        .size(50.dp)
-                                        .clip(CircleShape),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.AccountCircle,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(50.dp),
-                                    tint = Color.LightGray
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            Column {
-                                Text(
-                                    text = empleadoAEliminar!!.nombre,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.Black
-                                )
-                                Text(
-                                    text = empleadoAEliminar!!.areaNombre,
-                                    fontSize = 14.sp,
-                                    color = Color.Gray
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Button(
-                                onClick = {
-                                    showDeleteDialog = false
-                                    empleadoAEliminar = null
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(50.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.Black
-                                ),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text("Cancelar", color = Color.White, fontSize = 16.sp)
-                            }
-
-                            Button(
-                                onClick = {
-                                    empleadoAEliminar?.let { empleado ->
-                                        empleadoViewModel.eliminarEmpleado(
-                                            empleadoId = empleado.id,
-                                            onSuccess = {
-                                                showDeleteDialog = false
-                                                showSuccessDialog = true
-                                            },
-                                            onError = { error ->
-                                                println("Error eliminando empleado: $error")
-                                                showDeleteDialog = false
-                                                mensaje = "❌ Error: $error"
-                                                mostrarMensaje = true
-                                            }
-                                        )
-                                    }
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(50.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFFE91E63)
-                                ),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text("Eliminar", color = Color.White, fontSize = 16.sp)
-                            }
-                        }
-                    }
+                    )
+                },
+                onCancelar = {
+                    showDeleteDialog = false
+                    empleadoAEliminar = null
                 }
-            }
+            )
         }
 
-        // Diálogo de éxito al eliminar
+        // Diálogo de éxito al eliminar optimizado
         if (showSuccessDialog) {
-            Dialog(onDismissRequest = { showSuccessDialog = false }) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(80.dp)
-                                .background(Color(0xFFE91E63), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Eliminado",
-                                tint = Color.White,
-                                modifier = Modifier.size(48.dp)
-                            )
-                        }
-
-                        Text(
-                            text = "¡Empleado Eliminado!",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black,
-                            textAlign = TextAlign.Center
-                        )
-
-                        Text(
-                            text = "El empleado ha sido eliminado exitosamente",
-                            fontSize = 14.sp,
-                            color = Color.Gray,
-                            textAlign = TextAlign.Center
-                        )
-
-                        Button(
-                            onClick = {
-                                showSuccessDialog = false
-                                empleadoAEliminar = null
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFE91E63)
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text("Aceptar", color = Color.White, fontSize = 16.sp)
-                        }
-                    }
-                }
+            DialogoEliminacionExitosa {
+                showSuccessDialog = false
+                empleadoAEliminar = null
             }
         }
 
-        // Diálogo de éxito al crear/actualizar empleado
+        // Diálogo de éxito al crear/actualizar empleado optimizado
         if (showSuccessCreateDialog && empleadoCreado != null) {
-            LaunchedEffect(Unit) {
-                kotlinx.coroutines.delay(3000)
-                showSuccessCreateDialog = false
-                empleadoCreado = null
-            }
-
-            Dialog(onDismissRequest = { }) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(80.dp)
-                                .background(Color.Black, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("✓", color = Color.White, fontSize = 48.sp, fontWeight = FontWeight.Bold)
-                        }
-
-                        Text(
-                            text = if (esCreacion) "¡Empleado Creado!" else "¡Datos Actualizados!",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black,
-                            textAlign = TextAlign.Center
-                        )
-
-                        Text(
-                            text = if (esCreacion)
-                                "El empleado se ha creado correctamente en el sistema"
-                            else
-                                "Los datos del empleado se han actualizado correctamente en el sistema",
-                            fontSize = 14.sp,
-                            color = Color.Gray,
-                            textAlign = TextAlign.Center
-                        )
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Color(0xFFF5F5F5), RoundedCornerShape(12.dp))
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            if (empleadoCreado!!.imagenUrl != null && empleadoCreado!!.imagenUrl!!.isNotBlank()) {
-                                AsyncImage(
-                                    model = ImageRequest.Builder(LocalContext.current)
-                                        .data(empleadoCreado!!.imagenUrl)
-                                        .crossfade(true)
-                                        .build(),
-                                    contentDescription = "Foto empleado",
-                                    modifier = Modifier
-                                        .size(50.dp)
-                                        .clip(CircleShape),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.AccountCircle,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(50.dp),
-                                    tint = Color.LightGray
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            Column {
-                                Text(
-                                    text = empleadoCreado!!.nombre,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.Black
-                                )
-                                Text(
-                                    text = empleadoCreado!!.areaNombre,
-                                    fontSize = 14.sp,
-                                    color = Color.Gray
-                                )
-                            }
-                        }
-                    }
+            DialogoExitoEmpleado(
+                empleado = empleadoCreado!!,
+                esCreacion = esCreacion,
+                onDismiss = {
+                    showSuccessCreateDialog = false
+                    empleadoCreado = null
                 }
-            }
+            )
         }
 
         if (mostrarMensaje) {
@@ -584,20 +312,10 @@ fun EmpleadoListScreen(
                 kotlinx.coroutines.delay(3000)
                 mostrarMensaje = false
             }
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (mensaje.contains("exitosamente")) Color(0xFF4CAF50) else Color(0xFFE53935)
-                )
-            ) {
-                Text(
-                    text = mensaje,
-                    modifier = Modifier.padding(16.dp),
-                    color = Color.White
-                )
-            }
+            MensajeEstado(
+                mensaje = mensaje,
+                modifier = Modifier.padding(16.dp)
+            )
         }
     }
 }
