@@ -65,36 +65,72 @@ fun EmployeeScreen(
                 EmployeeInfoCard(user = currentUser)
             }
             
-            // Mensaje de bienvenida
+            // Saludo personalizado al empleado
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        // Emoji de saludo
                         Text(
                             text = "👋",
                             style = MaterialTheme.typography.headlineLarge,
-                            modifier = Modifier.size(48.dp)
+                            modifier = Modifier.size(64.dp)
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        // Saludo personalizado
                         Text(
-                            text = "¡Bienvenido al Sistema!",
-                            style = MaterialTheme.typography.titleLarge,
+                            text = "¡Hola, ${currentUser?.firstName ?: "Empleado"}!",
+                            style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        // Mensaje de bienvenida
                         Text(
-                            text = "Aquí puedes acceder a las funciones disponibles para empleados",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                            modifier = Modifier.padding(top = 8.dp)
+                            text = "Bienvenido al Sistema de Gestión Empresarial",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        // Descripción
+                        Text(
+                            text = "Aquí tienes acceso a todas las herramientas y funciones disponibles para tu rol de empleado",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        // Indicador de rol
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            )
+                        ) {
+                            Text(
+                                text = "👤 Rol: Empleado",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -134,28 +170,52 @@ fun EmployeeInfoCard(user: User?) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "👤",
-                style = MaterialTheme.typography.headlineLarge,
-                modifier = Modifier.size(48.dp)
-            )
+            // Avatar del empleado
+            Card(
+                modifier = Modifier.size(60.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                shape = androidx.compose.foundation.shape.CircleShape
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "👤",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
             
             Spacer(modifier = Modifier.width(16.dp))
             
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Bienvenido, ${user?.firstName ?: "Empleado"}",
+                    text = "Información Personal",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
                 Text(
-                    text = user?.email ?: "email@ejemplo.com",
+                    text = "Nombre: ${user?.firstName ?: "N/A"} ${user?.lastName ?: ""}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
+                
                 Text(
-                    text = "Rol: ${user?.role?.name ?: "Empleado"}",
+                    text = "Email: ${user?.email ?: "N/A"}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                
+                Text(
+                    text = "ID: ${user?.id ?: "N/A"}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                 )
