@@ -147,7 +147,7 @@ class DualAuthRepository {
             println("DEBUG: Respuesta de búsqueda de empleado - Status: ${response.status}")
             
             if (response.status.isSuccess()) {
-                val responseBody = response.bodyAsText()
+                val responseBody = response.body<String>()
                 println("DEBUG: Respuesta completa de Supabase: $responseBody")
                 
                 val empleados = response.body<List<EmpleadoLoginResponse>>()
@@ -190,7 +190,7 @@ class DualAuthRepository {
                 }
             } else {
                 println("DEBUG: Error en respuesta de Supabase: ${response.status}")
-                val errorBody = response.bodyAsText()
+                val errorBody = response.body<String>()
                 println("DEBUG: Error body: $errorBody")
                 AuthResult.Error("Error al buscar empleado")
             }
