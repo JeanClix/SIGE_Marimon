@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -17,6 +18,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import org.marimon.sigc.navigation.AppNavigation
 import org.marimon.sigc.viewmodel.AuthViewModel
+import org.marimon.sigc.data.model.User
+import org.marimon.sigc.data.model.UserRole
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,13 +44,13 @@ class MainActivity : ComponentActivity() {
                 
                 if (userId != null && userEmail != null && userName != null && userRole != null) {
                     // Crear usuario con los datos recibidos
-                    val user = org.marimon.sigc.data.model.User(
+                    val user = User(
                         id = userId,
                         username = userName,
                         email = userEmail,
                         firstName = userName,
                         lastName = "",
-                        role = if (userRole == "ADMIN") org.marimon.sigc.data.model.UserRole.ADMIN else org.marimon.sigc.data.model.UserRole.EMPLOYEE,
+                        role = if (userRole == "ADMIN") UserRole.ADMIN else UserRole.EMPLOYEE,
                         createdAt = null,
                         updatedAt = null
                     )
