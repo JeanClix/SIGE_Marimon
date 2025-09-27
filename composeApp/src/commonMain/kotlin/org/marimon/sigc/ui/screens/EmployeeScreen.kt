@@ -43,7 +43,7 @@ fun EmployeeScreen(
                 onLogout = {
                     println("DEBUG: EmployeeScreen - Botón cerrar sesión presionado")
                     authViewModel.logout()
-                    onLogout()
+                    // No llamar onLogout() aquí, dejar que AppNavigation maneje la navegación
                 }
             )
         }

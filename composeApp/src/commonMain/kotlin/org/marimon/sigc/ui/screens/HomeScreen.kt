@@ -35,7 +35,7 @@ fun HomeScreen(
                 actions = {
                     TextButton(onClick = { 
                         authViewModel.logout()
-                        onLogout()
+                        // No llamar onLogout() aquí, dejar que AppNavigation maneje la navegación
                     }) {
                         Text("Cerrar Sesión")
                     }
