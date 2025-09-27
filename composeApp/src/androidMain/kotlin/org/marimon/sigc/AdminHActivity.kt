@@ -64,13 +64,11 @@ class MainActivity : ComponentActivity() {
             
             // Manejar logout - volver a LoginActivity
             LaunchedEffect(isLoggedIn) {
-                isLoggedIn.collect { loggedIn ->
-                    if (!loggedIn) {
-                        println("DEBUG: MainActivity - Usuario deslogueado, volviendo a LoginActivity")
-                        val intent = Intent(this@MainActivity, LoginActivity::class.java)
-                        startActivity(intent)
-                        finish()
-                    }
+                if (!isLoggedIn) {
+                    println("DEBUG: MainActivity - Usuario deslogueado, volviendo a LoginActivity")
+                    val intent = Intent(this@MainActivity, LoginActivity::class.java)
+                    startActivity(intent)
+                    finish()
                 }
             }
             
