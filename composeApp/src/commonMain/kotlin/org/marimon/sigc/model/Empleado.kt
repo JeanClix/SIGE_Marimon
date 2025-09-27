@@ -15,6 +15,7 @@ data class EmpleadoCreate(
     val nombre: String,
     val emailCorporativo: String,
     val areaId: Int,
+    val password: String,
     val imagenUrl: String? = null,
     val activo: Boolean = true
 )

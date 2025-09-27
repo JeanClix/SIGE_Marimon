@@ -110,6 +110,7 @@ class EmpleadoViewModel : ViewModel() {
                         "nombre": "${empleado.nombre}",
                         "email_corporativo": "${empleado.emailCorporativo}",
                         "area_id": ${empleado.areaId},
+                        "password": "${empleado.password}",
                         "imagen_url": ${if (empleado.imagenUrl != null) "\"${empleado.imagenUrl}\"" else "null"},
                         "activo": ${empleado.activo}
                     }

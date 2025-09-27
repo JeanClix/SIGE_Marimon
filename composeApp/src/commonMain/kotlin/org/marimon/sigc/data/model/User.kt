@@ -9,6 +9,13 @@ data class User(
     val email: String,
     val firstName: String,
     val lastName: String,
+    val role: UserRole = UserRole.EMPLOYEE,
     val createdAt: String? = null,
     val updatedAt: String? = null
 )
+
+@Serializable
+enum class UserRole {
+    ADMIN,
+    EMPLOYEE
+}

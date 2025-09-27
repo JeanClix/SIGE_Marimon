@@ -180,11 +180,12 @@ fun EmpleadoListScreen(
             CrearEmpleadoDialog(
                 areas = areas,
                 onDismiss = { showDialog = false },
-                onConfirm = { nombre, email, areaId, urlImagen ->
+                onConfirm = { nombre, email, areaId, urlImagen, password ->
                     val nuevoEmpleado = EmpleadoCreate(
                         nombre = nombre,
                         emailCorporativo = email,
                         areaId = areaId,
+                        password = password,
                         imagenUrl = urlImagen,
                         activo = true
                     )
