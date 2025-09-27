@@ -17,6 +17,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import android.content.Intent
 import org.marimon.sigc.navigation.AppNavigation
 import org.marimon.sigc.viewmodel.AuthViewModel
@@ -63,7 +64,7 @@ class MainActivity : ComponentActivity() {
             
             // Manejar logout - volver a LoginActivity
             LaunchedEffect(isLoggedIn) {
-                if (!isLoggedIn) {
+                if (!isLoggedIn.value) {
                     println("DEBUG: MainActivity - Usuario deslogueado, volviendo a LoginActivity")
                     val intent = Intent(this@MainActivity, LoginActivity::class.java)
                     startActivity(intent)

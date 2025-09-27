@@ -21,10 +21,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.runtime.collectAsState
 import org.marimon.sigc.data.model.User
-import org.marimon.sigc.AppAndroid
-import org.marimon.sigc.PanelAdministrativo
-import org.marimon.sigc.Routes
-import org.marimon.sigc.R
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.draw.shadow
@@ -50,15 +46,9 @@ fun AppNavigation(authViewModel: AuthViewModel) {
         // Redirigir según el rol del usuario
         when (currentUser?.role) {
             UserRole.ADMIN -> {
-                println("DEBUG: AppNavigation - Redirigiendo a Vista Administrativa Original (ADMIN)")
-                // Usar la vista original del administrador con barra de navegación inferior
-                AppAndroid(
-                    currentRoute = "home",
-                    onNavigate = { route ->
-                        println("DEBUG: AppNavigation - Navegando a: $route")
-                        // TODO: Implementar navegación entre módulos
-                    }
-                )
+                println("DEBUG: AppNavigation - Redirigiendo a Vista Administrativa (ADMIN)")
+                // Vista simple para administrador
+                AdminSimpleView(authViewModel = authViewModel)
             }
             UserRole.EMPLOYEE -> {
                 println("DEBUG: AppNavigation - Redirigiendo a EmployeeDashboard (EMPLOYEE)")
@@ -90,182 +80,123 @@ fun AppNavigation(authViewModel: AuthViewModel) {
     }
 }
 
-data class NavItem(val route: String, val iconRes: Int)
-
 @Composable
-fun CustomBottomNavBar(
-    currentRoute: String,
-    onNavigate: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val navItems = listOf(
-        NavItem("home", R.drawable.home),
-        NavItem("user", R.drawable.user),
-        NavItem("circulo", R.drawable.circulo),
-        NavItem("grafico", R.drawable.grafico)
-    )
-
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = Color.Black,
-        shadowElevation = 8.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            navItems.forEach { item ->
-                val isSelected = currentRoute == item.route
-                val iconColor = if (isSelected) Color(0xFFE53E3E) else Color.Gray
-
-                IconButton(
-                    onClick = { onNavigate(item.route) },
-                    modifier = Modifier
-                        .size(48.dp)
-                        .then(
-                            if (isSelected) {
-                                Modifier.shadow(
-                                    elevation = 4.dp,
-                                    shape = CircleShape,
-                                    spotColor = Color(0xFFE53E3E).copy(alpha = 0.3f)
-                                )
-                            } else Modifier
-                        )
-                ) {
-                    Image(
-                        painter = painterResource(id = item.iconRes),
-                        contentDescription = when(item.route) {
-                            "home" -> "Inicio"
-                            "user" -> "Empleados"
-                            "circulo" -> "Productos"
-                            "grafico" -> "Gráficos"
-                            else -> null
-                        },
-                        modifier = Modifier.size(24.dp),
-                        colorFilter = ColorFilter.tint(iconColor)
+fun AdminSimpleView(authViewModel: AuthViewModel) {
+    val currentUser by authViewModel.currentUser.collectAsState()
+    
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "SIGE Marimon - Administrador",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
                     )
-                }
-            }
+                },
+                actions = {
+                    TextButton(onClick = { 
+                        authViewModel.logout()
+                    }) {
+                        Text("Cerrar Sesión")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            )
         }
-    }
-}
-
-@Composable
-fun TopAdminBar() {
-    Surface(
-        color = Color(0xFFE53E3E),
-        shape = MaterialTheme.shapes.large.copy(
-            topStart = CornerSize(0.dp),
-            topEnd = CornerSize(0.dp),
-            bottomStart = CornerSize(32.dp),
-            bottomEnd = CornerSize(32.dp)
-        ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(140.dp)
-    ) {
-        Row(
+    ) { paddingValues ->
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 32.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(
-                    shape = CircleShape,
-                    color = Color.White,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.user),
-                        contentDescription = "Avatar",
-                        modifier = Modifier.size(44.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = "Hola!",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White
-                    )
-                    Text(
-                        text = "Administrador",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.White
-                    )
-                }
-            }
-        }
-    }
-}
-
-data class PanelItem(val label: String, val iconRes: Int, val route: String)
-
-@Composable
-fun PanelAdministrativo(onNavigate: (String) -> Unit = {}) {
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        TopAdminBar()
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+                .padding(paddingValues)
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Panel Administrativo",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            val items = listOf(
-                PanelItem("Registro de empleados", R.drawable.r_empleado, Routes.EMPLOYEES),
-                PanelItem("Reporte de Ventas", R.drawable.r_ventas, Routes.HOME), // Temporalmente va a home
-                PanelItem("Reporte de Productos", R.drawable.r_producto, Routes.PRODUCTS),
-                PanelItem("Dashboard KPI", R.drawable.kpi, Routes.KPI)
-            )
-
-            for (row in 0..1) {
-                Row(
+            // Información del usuario
+            item {
+                Card(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-                    for (col in 0..1) {
-                        val item = items[row * 2 + col]
-                        val imageSize = if (item.label == "Registro de empleados") 70.dp else 58.dp
-                        Card(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(120.dp)
-                                .clickable { onNavigate(item.route) },
-                            elevation = CardDefaults.cardElevation(8.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(8.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Image(
-                                    painter = painterResource(id = item.iconRes),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(imageSize)
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = item.label,
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "👤",
+                            style = MaterialTheme.typography.headlineLarge,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        
+                        Spacer(modifier = Modifier.width(16.dp))
+                        
+                        Column {
+                            Text(
+                                text = "Bienvenido, ${currentUser?.firstName ?: "Administrador"}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                            Text(
+                                text = currentUser?.email ?: "admin@sige.com",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                            )
+                            Text(
+                                text = "Rol: ${currentUser?.role?.name ?: "ADMIN"}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                }
+            }
+            
+            // Menú de opciones administrativas
+            item {
+                Text(
+                    text = "Panel Administrativo",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+            
+            items(getAdminMenuItems()) { menuItem ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { /* TODO: Implementar navegación */ },
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = menuItem.emoji,
+                            style = MaterialTheme.typography.headlineMedium,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        
+                        Spacer(modifier = Modifier.width(16.dp))
+                        
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = menuItem.title,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = menuItem.description,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
                         }
                     }
                 }
@@ -273,4 +204,36 @@ fun PanelAdministrativo(onNavigate: (String) -> Unit = {}) {
         }
     }
 }
+
+data class AdminMenuItem(
+    val title: String,
+    val description: String,
+    val emoji: String
+)
+
+fun getAdminMenuItems(): List<AdminMenuItem> {
+    return listOf(
+        AdminMenuItem(
+            title = "Gestión de Empleados",
+            description = "Administrar información de empleados",
+            emoji = "👥"
+        ),
+        AdminMenuItem(
+            title = "Gestión de Productos",
+            description = "Administrar catálogo de productos",
+            emoji = "📦"
+        ),
+        AdminMenuItem(
+            title = "Reportes y KPI",
+            description = "Ver métricas y reportes del sistema",
+            emoji = "📊"
+        ),
+        AdminMenuItem(
+            title = "Configuración",
+            description = "Configurar parámetros del sistema",
+            emoji = "⚙️"
+        )
+    )
+}
+
 
