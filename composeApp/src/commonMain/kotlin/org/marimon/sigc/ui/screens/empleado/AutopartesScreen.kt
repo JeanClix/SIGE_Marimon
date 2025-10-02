@@ -18,8 +18,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.layout.ContentScale
 import org.marimon.sigc.model.Empleado
+import org.marimon.sigc.ui.components.ProductImage
+import org.marimon.sigc.model.Producto
 import org.marimon.sigc.viewmodel.AuthViewModel
+import org.marimon.sigc.viewmodel.ProductoViewModel
 
 // Colores Marimon
 private val RedPure = Color(0xFFFF0000)
@@ -39,6 +43,52 @@ fun AutopartesScreen(
 ) {
     var searchText by remember { mutableStateOf("") }
     var currentPage by remember { mutableIntStateOf(1) }
+    
+    // ViewModel para manejar productos
+    val productoViewModel = remember { ProductoViewModel() }
+    val productos = productoViewModel.productos
+    
+    // Cargar productos al inicializar
+    LaunchedEffect(Unit) {
+        println("DEBUG: Cargando productos desde la base de datos")
+        productoViewModel.cargarProductos()
+    }
+    
+    // Filtrar productos por búsqueda
+    val productosFiltrados = remember(productos, searchText) {
+        if (searchText.isBlank()) {
+            productos
+        } else {
+            productos.filter { producto ->
+                producto.nombre.contains(searchText, ignoreCase = true) ||
+                producto.codigo.contains(searchText, ignoreCase = true) ||
+                producto.descripcion?.contains(searchText, ignoreCase = true) == true
+            }
+        }
+    }
+    
+    // Paginación
+    val itemsPerPage = 6
+    val totalPages = if (productosFiltrados.isNotEmpty()) {
+        (productosFiltrados.size + itemsPerPage - 1) / itemsPerPage
+    } else {
+        1
+    }
+    
+    // Ajustar página actual si es mayor al total de páginas
+    LaunchedEffect(totalPages) {
+        if (currentPage > totalPages) {
+            currentPage = maxOf(1, totalPages)
+        }
+    }
+    
+    val startIndex = (currentPage - 1) * itemsPerPage
+    val endIndex = minOf(startIndex + itemsPerPage, productosFiltrados.size)
+    val productosEnPagina = if (productosFiltrados.isNotEmpty()) {
+        productosFiltrados.subList(startIndex, endIndex)
+    } else {
+        emptyList()
+    }
     
     Scaffold(
         topBar = {
@@ -192,80 +242,91 @@ fun AutopartesScreen(
                 singleLine = true
             )
             
-            // Grid de productos
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Producto 1: Aceite FG
-                item {
-                    ProductCard(
-                        emoji = "🛢️",
-                        price = "S/ 99",
-                        name = "Aceite FG",
-                        stock = "Stock: 5",
-                        borderColor = RedPure
-                    )
+            // Grid de productos dinámico
+            if (productosEnPagina.isEmpty() && productos.isEmpty()) {
+                // Estado de carga
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator(
+                            color = RedPure,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Cargando productos...",
+                            color = TextSecondary,
+                            fontSize = 16.sp
+                        )
+                    }
                 }
-                
-                // Producto 2: Llanta
-                item {
-                    ProductCard(
-                        emoji = "🛞",
-                        price = "S/ 199",
-                        name = "Llanta",
-                        stock = "Stock: 8",
-                        borderColor = GreenStock
-                    )
+            } else if (productosEnPagina.isEmpty() && searchText.isNotBlank()) {
+                // No hay resultados de búsqueda
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "🔍",
+                            fontSize = 48.sp
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "No se encontraron productos",
+                            color = TextPrimary,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Intenta con otros términos de búsqueda",
+                            color = TextSecondary,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
-                
-                // Producto 3: Filtro de Aire
-                item {
-                    ProductCard(
-                        emoji = "🔧",
-                        price = "S/ 79",
-                        name = "Filtro de Aire",
-                        stock = "Stock: 12",
-                        borderColor = RedPure
-                    )
-                }
-                
-                // Producto 4: Disco de Freno
-                item {
-                    ProductCard(
-                        emoji = "⚙️",
-                        price = "S/ 129",
-                        name = "Disco Freno",
-                        stock = "Stock: 9",
-                        borderColor = GreenStock
-                    )
-                }
-                
-                // Producto 5: Aceite OSL
-                item {
-                    ProductCard(
-                        emoji = "🛢️",
-                        price = "S/ 89",
-                        name = "Aceite OSL",
-                        stock = "Stock: 6",
-                        borderColor = RedPure
-                    )
-                }
-                
-                // Producto 6: Motor TNA
-                item {
-                    ProductCard(
-                        emoji = "🔩",
-                        price = "S/ 299",
-                        name = "Motor TNA",
-                        stock = "Stock: 3",
-                        borderColor = GreenStock
-                    )
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(productosEnPagina.size) { index ->
+                        val producto = productosEnPagina[index]
+                        ProductCard(
+                            producto = producto,
+                            onEdit = { 
+                                println("DEBUG: Editar producto ${producto.nombre}")
+                                // TODO: Implementar edición
+                            },
+                            onDelete = { 
+                                println("DEBUG: Eliminar producto ${producto.nombre}")
+                                productoViewModel.eliminarProducto(
+                                    productoId = producto.id,
+                                    onSuccess = {
+                                        println("DEBUG: Producto eliminado exitosamente")
+                                    },
+                                    onError = { error ->
+                                        println("DEBUG: Error al eliminar producto: $error")
+                                    }
+                                )
+                            }
+                        )
+                    }
                 }
             }
             
@@ -291,7 +352,7 @@ fun AutopartesScreen(
                 Spacer(modifier = Modifier.width(16.dp))
                 
                 Text(
-                    text = currentPage.toString(),
+                    text = "$currentPage de $totalPages",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = TextPrimary
@@ -300,12 +361,12 @@ fun AutopartesScreen(
                 Spacer(modifier = Modifier.width(16.dp))
                 
                 TextButton(
-                    onClick = { currentPage++ }
+                    onClick = { if (currentPage < totalPages) currentPage++ }
                 ) {
                     Text(
                         text = "▶",
                         fontSize = 20.sp,
-                        color = TextPrimary
+                        color = if (currentPage < totalPages) TextPrimary else TextSecondary
                     )
                 }
             }
@@ -315,12 +376,24 @@ fun AutopartesScreen(
 
 @Composable
 private fun ProductCard(
-    emoji: String,
-    price: String,
-    name: String,
-    stock: String,
-    borderColor: Color
+    producto: Producto,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
 ) {
+    // Determinar emoji basado en el nombre del producto
+    val emoji = when {
+        producto.nombre.contains("aceite", ignoreCase = true) -> "🛢️"
+        producto.nombre.contains("llanta", ignoreCase = true) -> "🛞"
+        producto.nombre.contains("filtro", ignoreCase = true) -> "🔧"
+        producto.nombre.contains("freno", ignoreCase = true) -> "⚙️"
+        producto.nombre.contains("motor", ignoreCase = true) -> "🔩"
+        producto.nombre.contains("bateria", ignoreCase = true) -> "🔋"
+        producto.nombre.contains("luz", ignoreCase = true) -> "💡"
+        else -> "🔧" // Emoji por defecto
+    }
+    
+    // Determinar color del borde basado en stock
+    val borderColor = if (producto.cantidad > 10) GreenStock else RedPure
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -338,24 +411,19 @@ private fun ProductCard(
                 .padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Imagen del producto (emoji)
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .background(Color(0xFFF5F5F5), RoundedCornerShape(8.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = emoji,
-                    fontSize = 40.sp
-                )
-            }
+            // Imagen del producto
+            ProductImage(
+                imageUrl = producto.imagenUrl,
+                productName = producto.nombre,
+                modifier = Modifier.size(80.dp),
+                fallbackEmoji = emoji
+            )
             
             Spacer(modifier = Modifier.height(8.dp))
             
             // Precio
             Text(
-                text = price,
+                text = "S/ ${producto.precio}",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
@@ -363,7 +431,7 @@ private fun ProductCard(
             
             // Nombre del producto
             Text(
-                text = name,
+                text = producto.nombre,
                 fontSize = 13.sp,
                 color = TextPrimary,
                 maxLines = 1,
@@ -372,7 +440,7 @@ private fun ProductCard(
             
             // Stock
             Text(
-                text = stock,
+                text = "Stock: ${producto.cantidad}",
                 fontSize = 11.sp,
                 color = TextSecondary
             )
@@ -386,7 +454,7 @@ private fun ProductCard(
             ) {
                 // Botón Editar
                 Button(
-                    onClick = { },
+                    onClick = onEdit,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF333333)
@@ -407,7 +475,7 @@ private fun ProductCard(
                 
                 // Botón Borrar
                 Button(
-                    onClick = { },
+                    onClick = onDelete,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = RedPure
