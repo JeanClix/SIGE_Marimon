@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import org.marimon.sigc.ui.screens.LoginScreen
 import org.marimon.sigc.ui.screens.EmpleadoScreen
+import org.marimon.sigc.ui.screens.empleado.AutopartesScreen
 import org.marimon.sigc.viewmodel.AuthViewModel
 
 class LoginActivity : ComponentActivity() {
@@ -20,6 +21,14 @@ class LoginActivity : ComponentActivity() {
     val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
                 val userType by authViewModel.userType.collectAsState()
                 val currentEmpleado by authViewModel.currentEmpleado.collectAsState()
+                
+                // Estado para controlar la navegación dentro del empleado
+                var currentScreen by remember { mutableStateOf("empleado") }
+                
+                // Log del estado actual
+                LaunchedEffect(currentScreen) {
+                    println("DEBUG: currentScreen cambió a: $currentScreen")
+                }
                 
                 when {
                     !isLoggedIn -> {
@@ -39,15 +48,37 @@ class LoginActivity : ComponentActivity() {
                         }
                     }
                     userType == "empleado" && currentEmpleado != null -> {
-                        // Mostrar EmpleadoScreen para empleados
-                        EmpleadoScreen(
-                            empleado = currentEmpleado!!,
-                            authViewModel = authViewModel,
-                            onLogout = {
-                                // El logout ya se maneja en el ViewModel
-                                // La UI se actualizará automáticamente
+                        // Navegación para empleados
+                        when (currentScreen) {
+                            "empleado" -> {
+                                println("DEBUG: Mostrando EmpleadoScreen")
+                                EmpleadoScreen(
+                                    empleado = currentEmpleado!!,
+                                    authViewModel = authViewModel,
+                                    onLogout = {
+                                        // El logout ya se maneja en el ViewModel
+                                        // La UI se actualizará automáticamente
+                                    },
+                                    onNavigateToAutopartes = {
+                                        println("DEBUG: onNavigateToAutopartes callback ejecutado")
+                                        currentScreen = "autopartes"
+                                        println("DEBUG: currentScreen establecido a: autopartes")
+                                    }
+                                )
                             }
-                        )
+                            "autopartes" -> {
+                                println("DEBUG: Mostrando AutopartesScreen")
+                                AutopartesScreen(
+                                    empleado = currentEmpleado!!,
+                                    authViewModel = authViewModel,
+                                    onBack = {
+                                        println("DEBUG: onBack callback ejecutado")
+                                        currentScreen = "empleado"
+                                        println("DEBUG: currentScreen establecido a: empleado")
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }

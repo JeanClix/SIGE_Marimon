@@ -3,7 +3,6 @@ package org.marimon.sigc.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,12 +18,18 @@ import androidx.compose.ui.unit.sp
 import org.marimon.sigc.model.Empleado
 import org.marimon.sigc.viewmodel.AuthViewModel
 
-// Colores para empleados
-private val EmpleadoBlue = Color(0xFF1976D2) // Azul corporativo
-private val EmpleadoLightBlue = Color(0xFF42A5F5) // Azul claro
+// Colores Marimon
+private val RedPure = Color(0xFFFF0000) // Rojo puro
+private val BackgroundDark = Color(0xFF000000) // Fondo negro
+private val CardBackground = Color(0xFFFFFFFF) // Tarjeta blanca
+private val TextPrimary = Color(0xFF000000) // Texto negro
+private val TextSecondary = Color(0xFF666666) // Texto gris
+private val InputBorder = Color(0xFFE5E5E5) // Borde gris claro
+private val TextFooter = Color(0xFF666666) // Color específico para el footer
+
 private val BackgroundGradient = listOf(
-    Color(0xFFF5F5F5), // Gris muy claro
-    Color(0xFFE3F2FD)  // Azul muy claro
+    Color(0xFF333333), // Gris oscuro
+    BackgroundDark     // Negro
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,7 +37,8 @@ private val BackgroundGradient = listOf(
 fun EmpleadoScreen(
     empleado: Empleado,
     authViewModel: AuthViewModel,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onNavigateToAutopartes: () -> Unit = { }
 ) {
     Column(
         modifier = Modifier
@@ -52,14 +58,30 @@ fun EmpleadoScreen(
                     Box(
                         modifier = Modifier
                             .size(40.dp)
-                            .clip(CircleShape)
-                            .background(EmpleadoBlue),
+                            .clip(RoundedCornerShape(50))
+                            .background(RedPure),
                         contentAlignment = Alignment.Center
                     ) {
+                        // TODO: Reemplazar con imagen del empleado cuando esté disponible
+                        /*
+                        AsyncImage(
+                            model = empleado.imagenUrl,
+                            contentDescription = "Avatar ${empleado.nombre}",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(50)),
+                            contentScale = ContentScale.Crop,
+                            placeholder = painterResource(R.drawable.placeholder_avatar),
+                            error = painterResource(R.drawable.placeholder_avatar)
+                        )
+                        */
+                        
+                        // Texto temporal mientras no hay imagen
                         Text(
-                            text = "👤",
+                            text = empleado.nombre.firstOrNull()?.uppercase() ?: "E",
                             color = Color.White,
-                            fontSize = 20.sp
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                     
@@ -93,7 +115,7 @@ fun EmpleadoScreen(
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = EmpleadoBlue
+                containerColor = RedPure
             )
         )
         
@@ -111,7 +133,7 @@ fun EmpleadoScreen(
                     shape = RoundedCornerShape(16.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White
+                        containerColor = CardBackground
                     )
                 ) {
                     Column(
@@ -129,17 +151,78 @@ fun EmpleadoScreen(
                             text = "¡Bienvenido al Sistema!",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
-                            color = EmpleadoBlue,
+                            color = RedPure,
                             textAlign = TextAlign.Center
                         )
                         
                         Spacer(modifier = Modifier.height(8.dp))
                         
                         Text(
-                            text = "Acceso de Empleado - SIGE Marimon",
+                            text = "Empleado Marimon",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = Color.Gray,
+                            color = TextSecondary,
                             textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+            // Opciones de navegación para empleados
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = CardBackground
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Módulos Disponibles",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = RedPure,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                        
+                        // Administrar Autopartes
+                        NavigationOption(
+                            icon = "🔧",
+                            title = "Administrar Autopartes",
+                            description = "Gestionar inventario de repuestos y autopartes",
+                            enabled = true,
+                            onItemClick = { 
+                                println("DEBUG: Click en Administrar Autopartes")
+                                onNavigateToAutopartes()
+                                println("DEBUG: onNavigateToAutopartes() ejecutado")
+                            }
+                        )
+                        
+                        // Otras opciones futuras
+                        NavigationOption(
+                            icon = "🚗",
+                            title = "Gestión de Vehículos",
+                            description = "Administrar información de vehículos",
+                            enabled = false,
+                            onItemClick = { }
+                        )
+                        
+                        NavigationOption(
+                            icon = "👥",
+                            title = "Atención al Cliente",
+                            description = "Gestionar solicitudes y consultas",
+                            enabled = false,
+                            onItemClick = { }
+                        )
+                        
+                        NavigationOption(
+                            icon = "📋",
+                            title = "Órdenes de Trabajo",
+                            description = "Crear y gestionar órdenes de servicio",
+                            enabled = false,
+                            onItemClick = { }
                         )
                     }
                 }
@@ -152,7 +235,7 @@ fun EmpleadoScreen(
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White
+                        containerColor = CardBackground
                     )
                 ) {
                     Column(
@@ -162,7 +245,7 @@ fun EmpleadoScreen(
                             text = "Mi Información",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = EmpleadoBlue,
+                            color = RedPure,
                             modifier = Modifier.padding(bottom = 12.dp)
                         )
                         
@@ -179,54 +262,7 @@ fun EmpleadoScreen(
                 }
             }
             
-            // Funciones disponibles para empleados
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text(
-                            text = "Funciones Disponibles",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = EmpleadoBlue,
-                            modifier = Modifier.padding(bottom = 12.dp)
-                        )
-                        
-                        // Lista de funciones que puede realizar un empleado
-                        FunctionItem(
-                            title = "Consultar Productos",
-                            description = "Ver catálogo de productos disponibles",
-                            enabled = true
-                        )
-                        
-                        FunctionItem(
-                            title = "Registrar Ventas",
-                            description = "Crear y gestionar registros de ventas",
-                            enabled = true
-                        )
-                        
-                        FunctionItem(
-                            title = "Ver Reportes",
-                            description = "Consultar reportes de mi área",
-                            enabled = true
-                        )
-                        
-                        FunctionItem(
-                            title = "Actualizar Perfil",
-                            description = "Modificar información personal",
-                            enabled = false
-                        )
-                    }
-                }
-            }
+
             
             // Información del sistema
             item {
@@ -234,7 +270,7 @@ fun EmpleadoScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = EmpleadoLightBlue.copy(alpha = 0.1f)
+                        containerColor = RedPure.copy(alpha = 0.1f)
                     )
                 ) {
                     Column(
@@ -245,7 +281,7 @@ fun EmpleadoScreen(
                             text = "Sistema de Gestión Empresarial",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium,
-                            color = EmpleadoBlue,
+                            color = RedPure,
                             textAlign = TextAlign.Center
                         )
                         
@@ -254,7 +290,7 @@ fun EmpleadoScreen(
                         Text(
                             text = "Automotriz Marimon - Versión Empleado",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray,
+                            color = TextSecondary,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -305,7 +341,7 @@ private fun FunctionItem(
             .padding(vertical = 4.dp),
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (enabled) EmpleadoLightBlue.copy(alpha = 0.1f) 
+            containerColor = if (enabled) RedPure.copy(alpha = 0.1f) 
                            else Color.Gray.copy(alpha = 0.1f)
         )
     ) {
@@ -316,7 +352,7 @@ private fun FunctionItem(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = if (enabled) EmpleadoBlue else Color.Gray
+                color = if (enabled) RedPure else Color.Gray
             )
             Text(
                 text = description,
@@ -330,6 +366,104 @@ private fun FunctionItem(
                     color = Color.Gray.copy(alpha = 0.7f),
                     fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NavigationOption(
+    icon: String,
+    title: String,
+    description: String,
+    enabled: Boolean,
+    onItemClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (enabled) RedPure.copy(alpha = 0.05f) 
+                           else Color.Gray.copy(alpha = 0.1f)
+        ),
+        onClick = { 
+            println("DEBUG: Card clicked, enabled = $enabled")
+            if (enabled) {
+                println("DEBUG: Ejecutando onItemClick")
+                onItemClick()
+            } else {
+                println("DEBUG: Card deshabilitado, no se ejecuta onItemClick")
+            }
+        }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Icono con fondo circular
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        color = if (enabled) RedPure.copy(alpha = 0.1f) else Color.Gray.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(50)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = icon,
+                    fontSize = 20.sp
+                )
+            }
+            
+            // Contenido
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (enabled) TextPrimary else Color.Gray
+                )
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (enabled) TextSecondary else Color.Gray.copy(alpha = 0.6f)
+                )
+                if (!enabled) {
+                    Text(
+                        text = "Próximamente disponible",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.Gray.copy(alpha = 0.7f),
+                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                    )
+                }
+            }
+            
+            // Flecha de navegación
+            if (enabled) {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(
+                            color = RedPure,
+                            shape = RoundedCornerShape(50)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "→",
+                        fontSize = 16.sp,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }
