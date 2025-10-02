@@ -10,6 +10,7 @@ import org.marimon.sigc.data.model.AuthResult
 import org.marimon.sigc.data.model.LoginRequest
 import org.marimon.sigc.data.model.User
 import org.marimon.sigc.data.repository.SupabaseAuthRepository
+import org.marimon.sigc.model.Empleado
 
 class AuthViewModel : ViewModel() {
     
@@ -23,6 +24,12 @@ class AuthViewModel : ViewModel() {
     
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
+    
+    private val _currentEmpleado = MutableStateFlow<Empleado?>(null)
+    val currentEmpleado: StateFlow<Empleado?> = _currentEmpleado.asStateFlow()
+    
+    private val _userType = MutableStateFlow<String?>(null) // "admin" o "empleado"
+    val userType: StateFlow<String?> = _userType.asStateFlow()
     
     init {
         // Verificar si ya hay una sesión activa
@@ -50,18 +57,35 @@ class AuthViewModel : ViewModel() {
             
             _authState.value = result
             
-            if (result is AuthResult.Success) {
-                _isLoggedIn.value = true
-                _currentUser.value = result.user
+            when (result) {
+                is AuthResult.Success -> {
+                    _isLoggedIn.value = true
+                    _currentUser.value = result.user
+                    _userType.value = "admin"
+                    _currentEmpleado.value = null
+                }
+                is AuthResult.EmpleadoSuccess -> {
+                    _isLoggedIn.value = true
+                    _currentEmpleado.value = result.empleado
+                    _userType.value = "empleado"
+                    _currentUser.value = null
+                }
+                else -> {
+                    _isLoggedIn.value = false
+                    _currentUser.value = null
+                    _currentEmpleado.value = null
+                    _userType.value = null
+                }
             }
         }
     }
     
     fun logout() {
         viewModelScope.launch {
-            val result = authRepository.logout()
             _isLoggedIn.value = false
             _currentUser.value = null
+            _currentEmpleado.value = null
+            _userType.value = null
             _authState.value = AuthResult.Error("")
         }
     }

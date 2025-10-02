@@ -11,7 +11,6 @@ data class Empleado(
     val password: String? = null
 )
 
-// DTO para crear empleado
 data class EmpleadoCreate(
     val nombre: String,
     val emailCorporativo: String,

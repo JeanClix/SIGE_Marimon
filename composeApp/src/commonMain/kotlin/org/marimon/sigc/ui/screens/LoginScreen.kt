@@ -1,237 +1,274 @@
 package org.marimon.sigc.ui.screens
 
-import androidx.compose.foundation.Image
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.collectAsState
-import org.jetbrains.compose.resources.painterResource
 import org.marimon.sigc.viewmodel.AuthViewModel
-import sigc.composeapp.generated.resources.Res
-import sigc.composeapp.generated.resources.compose_multiplatform
 
-@OptIn(ExperimentalMaterial3Api::class)
+// Colores
+private val RedPure = Color(0xFFFF0000) // Rojo puro
+private val BackgroundDark = Color(0xFF000000) // Fondo negro
+private val CardBackground = Color(0xFFFFFFFF) // Tarjeta blanca
+private val TextPrimary = Color(0xFF000000) // Texto negro
+private val TextSecondary = Color(0xFF666666) // Texto gris
+private val InputBorder = Color(0xFFE5E5E5) // Borde gris claro
+private val TextFooter = Color(0xFF666666) // Color específico para el footer dentro de la tarjeta
+
 @Composable
 fun LoginScreen(
     authViewModel: AuthViewModel,
     onLoginSuccess: () -> Unit
 ) {
+    // CAMBIO 1: Inicializar los estados como cadenas vacías para que el placeholder funcione correctamente.
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    
-    val authState by authViewModel.authState.collectAsState()
+    var showPassword by remember { mutableStateOf(false) }
+    var rememberAccess by remember { mutableStateOf(false) }
+
     val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
-    
-    // Observar cambios en el estado de autenticación
+    val authState by authViewModel.authState.collectAsState()
+
+    val isLoading = authState is org.marimon.sigc.data.model.AuthResult.Loading
+    val errorMessage = (authState as? org.marimon.sigc.data.model.AuthResult.Error)?.message
+
+    // Simplified validation for prototype visual match
+    val emailValid = remember(email) { email.isNotBlank() }
+    val passwordValid = remember(password) { password.isNotBlank() }
+    val formValid = emailValid && passwordValid && !isLoading
+
     LaunchedEffect(isLoggedIn) {
-        if (isLoggedIn) {
-            onLoginSuccess()
-        }
+        if (isLoggedIn) onLoginSuccess()
     }
-    
+
+    val focusManager = LocalFocusManager.current
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primaryContainer,
-                        MaterialTheme.colorScheme.secondaryContainer
-                    )
-                )
-            )
+            .background(BackgroundDark)
+            .systemBarsPadding()
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Logo o imagen
-            Image(
-                painter = painterResource(Res.drawable.compose_multiplatform),
-                contentDescription = "Logo",
-                modifier = Modifier
-                    .size(120.dp)
-                    .padding(bottom = 32.dp)
-            )
-            
-            // Título
-            Text(
-                text = "SIGE Marimon",
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 32.sp
-                ),
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            
-            Text(
-                text = "Sistema de Gestión Empresarial",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 48.dp)
-            )
-            
-            // Card del formulario
-            Card(
+            // Placeholder for the Car Image
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                    .height(250.dp)
+                    .background(Color.Red.copy(alpha = 0.5f)) // Visual placeholder for the image area
+            )
+            // End of Car Image Placeholder
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Tarjeta blanca (Card)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                colors = CardDefaults.cardColors(containerColor = CardBackground),
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Campo de email
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = { 
-                            email = it
-                            authViewModel.clearError()
-                        },
-                        label = { Text("Email") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            focusedLabelColor = MaterialTheme.colorScheme.primary
-                        )
+                    // Título
+                    Text(
+                        text = "Iniciar Sesión",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = RedPure,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(bottom = 24.dp, top = 8.dp)
                     )
-                    
-                    // Campo de contraseña
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = { 
-                            password = it
-                            authViewModel.clearError()
-                        },
-                        label = { Text("Contraseña") },
-                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            focusedLabelColor = MaterialTheme.colorScheme.primary
+
+                    // Correo
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "Correo",
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(bottom = 4.dp)
                         )
-                    )
-                    
-                    // Mensaje de error
-                    when (val currentAuthState = authState) {
-                        is org.marimon.sigc.data.model.AuthResult.Error -> {
-                            if (currentAuthState.message.isNotEmpty()) {
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.errorContainer
-                                    )
+                        OutlinedTextField(
+                            value = email,
+                            onValueChange = { email = it },
+                            // El texto "ventas@marimon.com" permanece como placeholder
+                            placeholder = { Text("ventas@marimon.com", color = TextSecondary.copy(alpha = 0.7f)) },
+                            singleLine = true,
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = RedPure,
+                                unfocusedBorderColor = InputBorder,
+                                cursorColor = RedPure,
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White,
+                            ),
+                            isError = email.isNotBlank() && !isValidEmail(email.trim())
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Contraseña
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "Contraseña",
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                        OutlinedTextField(
+                            value = password,
+                            onValueChange = { password = it },
+                            // El texto "********" permanece como placeholder
+                            placeholder = { Text("********", color = TextSecondary.copy(alpha = 0.7f)) },
+                            trailingIcon = {
+                                TextButton(
+                                    onClick = { showPassword = !showPassword },
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                    modifier = Modifier.height(36.dp)
                                 ) {
                                     Text(
-                                        text = currentAuthState.message,
-                                        color = MaterialTheme.colorScheme.onErrorContainer,
-                                        modifier = Modifier.padding(12.dp),
-                                        style = MaterialTheme.typography.bodyMedium
+                                        text = if (showPassword) "👁️" else "🔒",
+                                        color = RedPure.copy(alpha = 0.6f),
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Normal
                                     )
                                 }
-                            }
-                        }
-                        else -> { /* No mostrar nada para otros estados */ }
+                            },
+                            singleLine = true,
+                            visualTransformation = if (showPassword) VisualTransformation.None
+                            else PasswordVisualTransformation(),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = RedPure,
+                                unfocusedBorderColor = InputBorder,
+                                cursorColor = RedPure,
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White,
+                            ),
+                            isError = password.isNotBlank() && password.length < 6
+                        )
                     }
-                    
-                    // Botón de login
+
+                    // Olvidaste tu contraseña - CENTRADO
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "¿Olvidaste tu contraseña? Ingresa ",
+                            color = TextPrimary,
+                            fontSize = 12.sp
+                        )
+                        TextButton(
+                            onClick = { /* TODO: Navigate to Forgot Password */ },
+                            contentPadding = PaddingValues(0.dp),
+                            modifier = Modifier.height(24.dp)
+                        ) {
+                            Text(
+                                text = "aquí",
+                                color = RedPure,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Recordar acceso
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = rememberAccess,
+                            onCheckedChange = { rememberAccess = it },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = RedPure,
+                                uncheckedColor = TextSecondary,
+                                checkmarkColor = Color.White
+                            )
+                        )
+                        Text("Recordar acceso", color = TextPrimary, fontSize = 14.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Botón Iniciar
                     Button(
                         onClick = {
-                            authViewModel.login(email, password)
+                            focusManager.clearFocus(force = true)
+                            authViewModel.login(email.trim(), password)
                         },
+                        enabled = formValid,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp),
-                        enabled = authState !is org.marimon.sigc.data.model.AuthResult.Loading,
+                            .height(48.dp),
+                        shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
+                            containerColor = RedPure,
+                            contentColor = Color.White,
+                            disabledContainerColor = RedPure.copy(alpha = 0.4f),
+                            disabledContentColor = Color.White.copy(alpha = 0.8f)
                         )
                     ) {
-                        when (authState) {
-                            is org.marimon.sigc.data.model.AuthResult.Loading -> {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    color = MaterialTheme.colorScheme.onPrimary
-                                )
-                            }
-                            else -> {
-                                Text(
-                                    text = "Iniciar Sesión",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        } else {
+                            Text("Iniciar", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                         }
                     }
-                }
-            }
-            
-            // Información de credenciales de prueba
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 24.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "Configuración de Supabase:",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    Text(
-                        text = "1. Configura tu URL y API Key en SupabaseConfig.kt",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    Text(
-                        text = "2. Crea usuarios en tu panel de Supabase",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    Text(
-                        text = "3. Usa email y contraseña para iniciar sesión",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
+
+                    // Error
+                    AnimatedVisibility(visible = !errorMessage.isNullOrBlank()) {
+                        Text(
+                            text = errorMessage.orEmpty(),
+                            color = RedPure,
+                            fontSize = 12.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 12.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }
     }
+}
+
+// Función auxiliar para validar email (reemplaza Patterns.EMAIL_ADDRESS para multiplataforma)
+private fun isValidEmail(email: String): Boolean {
+    return email.contains("@") && email.contains(".") && email.length > 5
 }
