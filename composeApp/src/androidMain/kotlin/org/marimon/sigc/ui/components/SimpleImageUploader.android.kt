@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import org.marimon.sigc.storage.SupabaseStorageManager
 
-
 @Composable
 actual fun SimpleImageUploader(
     currentImageUrl: String?,
@@ -49,135 +48,150 @@ actual fun SimpleImageUploader(
         }
     }
     
-    Card(
+    // Diseño minimalista más simple y limpio
+    OutlinedCard(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
-        border = if (currentImageUrl != null) BorderStroke(2.dp, Color(0xFF4CAF50)) 
-                else BorderStroke(1.dp, Color(0xFFE0E0E0))
+        colors = CardDefaults.outlinedCardColors(
+            containerColor = Color(0xFFFAFAFA)
+        ),
+        border = if (currentImageUrl.isNullOrBlank()) {
+            BorderStroke(1.dp, Color(0xFFE0E0E0))
+        } else {
+            BorderStroke(1.dp, Color(0xFF4CAF50))
+        }
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "📷 Imagen del Producto",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF333333)
-                )
-                
-                if (uploading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = Color(0xFFFF0000),
-                        strokeWidth = 2.dp
-                    )
-                }
-            }
+            // Label simple y elegante
+            Text(
+                text = "📷 Imagen del producto",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF37474F)
+            )
             
-            if (currentImageUrl != null) {
-                // Mostrar imagen cargada
-                Card(
+            if (currentImageUrl.isNullOrBlank()) {
+                // Sin imagen - diseño simple y minimalista
+                
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(
-                        modifier = Modifier.padding(12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "✅ Imagen cargada exitosamente",
-                            fontSize = 14.sp,
-                            color = Color(0xFF4CAF50),
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            text = currentImageUrl.takeLast(30),
-                            fontSize = 10.sp,
-                            color = Color(0xFF666666)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Button(
-                                onClick = {
-                                    // Cambiar imagen
-                                    imagePickerLauncher.launch("image/*")
-                                },
-                                enabled = !uploading,
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF333333)),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text(
-                                    text = "🔄 Cambiar",
-                                    color = Color.White,
-                                    fontSize = 12.sp
-                                )
-                            }
-                            
-                            Spacer(modifier = Modifier.width(8.dp))
-                            
-                            Button(
-                                onClick = {
-                                    onImageUploaded(null)
-                                },
-                                enabled = !uploading,
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF999999)),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text(
-                                    text = "❌ Quitar",
-                                    color = Color.White,
-                                    fontSize = 12.sp
-                                )
-                            }
-                        }
-                    }
-                }
-            } else {
-                // Sin imagen
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedButton(
+                    Text(
+                        text = "Ninguna imagen seleccionada",
+                        fontSize = 12.sp,
+                        color = Color(0xFF757575)
+                    )
+                    
+                    Button(
                         onClick = {
                             if (!uploading) {
                                 imagePickerLauncher.launch("image/*")
                             }
                         },
                         enabled = !uploading,
-                        modifier = Modifier.fillMaxWidth()
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF333333)
+                        ),
+                        modifier = Modifier.height(28.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp)
                     ) {
                         if (uploading) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                color = Color(0xFF333333),
-                                strokeWidth = 2.dp
+                                modifier = Modifier.size(10.dp),
+                                color = Color.White,
+                                strokeWidth = 1.dp
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Subiendo...",
+                                color = Color.White,
+                                fontSize = 10.sp
+                            )
+                        } else {
+                            Text(
+                                text = "+ Agregar",
+                                color = Color.White,
+                                fontSize = 10.sp
+                            )
                         }
+                    }
+                }
+            } else {
+                // Con imagen - diseño simple y clean
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
                         Text(
-                            text = if (uploading) "Subiendo..." else "📷 Seleccionar Imagen",
-                            color = Color(0xFF333333),
-                            fontSize = 14.sp
+                            text = "✓",
+                            fontSize = 12.sp,
+                            color = Color(0xFF4CAF50)
+                        )
+                        Text(
+                            text = "Imagen agregada",
+                            fontSize = 12.sp,
+                            color = Color(0xFF4CAF50),
+                            fontWeight = FontWeight.Medium
                         )
                     }
                     
-                    Text(
-                        text = "💡 Puedes seleccionar una imagen desde tu galería",
-                        fontSize = 11.sp,
-                        color = Color(0xFF666666),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    // Botones pequeños y discretos
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Botón Cambiar (más pequeño)
+                        OutlinedButton(
+                            onClick = {
+                                if (!uploading) {
+                                    imagePickerLauncher.launch("image/*")
+                                }
+                            },
+                            enabled = !uploading,
+                            modifier = Modifier.height(24.dp),
+                            contentPadding = PaddingValues(horizontal = 8.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = Color(0xFF666666)
+                            ),
+                            border = BorderStroke(0.5.dp, Color(0xFF999999))
+                        ) {
+                            Text(
+                                text = "Cambiar",
+                                fontSize = 9.sp
+                            )
+                        }
+                        
+                        // Botón Quitar (más pequeño)
+                        OutlinedButton(
+                            onClick = {
+                                if (!uploading) {
+                                    onImageUploaded(null)
+                                }
+                            },
+                            enabled = !uploading,
+                            modifier = Modifier.height(24.dp),
+                            contentPadding = PaddingValues(horizontal = 8.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = Color(0xFF999999)
+                            ),
+                            border = BorderStroke(0.5.dp, Color(0xFF999999))
+                        ) {
+                            Text(
+                                text = "Quitar",
+                                fontSize = 9.sp
+                            )
+                        }
+                    }
                 }
             }
         }

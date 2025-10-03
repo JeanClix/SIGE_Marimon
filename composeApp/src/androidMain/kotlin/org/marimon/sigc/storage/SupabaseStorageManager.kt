@@ -8,14 +8,17 @@ import kotlinx.coroutines.withContext
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.marimon.sigc.config.SupabaseCredentials
 import java.util.concurrent.TimeUnit
 
 class SupabaseStorageManager {
     
     // Configuración de Supabase
-    private val supabaseUrl = "https://xjqjlllzbcrpcylhnlmh.supabase.co"
-    private val serviceKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcWpsbGx6YmNycGN5bGhubG1oIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODk0NjgxMSwiZXhwIjoyMDc0NTIyODExfQ.4c5oU47ZA7FYyVwlrVVY6_sL9cLr5pMeEs6E5R4yspE"
-    
+    //private val supabaseUrl = "https://xjqjlllzbcrpcylhnlmh.supabase.co"
+    private val supabaseUrl = SupabaseCredentials.SUPABASE_URL
+    //private val serviceKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcWpsbGx6YmNycGN5bGhubG1oIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODk0NjgxMSwiZXhwIjoyMDc0NTIyODExfQ.4c5oU47ZA7FYyVwlrVVY6_sL9cLr5pMeEs6E5R4yspE"
+    private val serviceKey = SupabaseCredentials.SUPABASE_ANON_KEY
+
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(60, TimeUnit.SECONDS)
@@ -33,7 +36,7 @@ class SupabaseStorageManager {
      * Sube una imagen de producto a Supabase Storage
      */
     suspend fun subirImagenProducto(uri: Uri, context: Context): String? {
-        return subirImagenGeneral(uri, context, "producto", "producto")
+        return subirImagenGeneral(uri, context, "productos-imagenes", "producto")
     }
     
     /**
