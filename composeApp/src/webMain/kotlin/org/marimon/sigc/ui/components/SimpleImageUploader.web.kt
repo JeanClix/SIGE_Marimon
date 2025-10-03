@@ -5,6 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -14,34 +15,36 @@ actual fun SimpleImageUploader(
     onImageUploaded: (String?) -> Unit,
     modifier: Modifier
 ) {
-    Card(
+    OutlinedCard(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
+        colors = CardDefaults.outlinedCardColors(
+            containerColor = Color(0xFFFAFAFA)
+        )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "📷 Imagen del Producto",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF333333)
+                text = "📷 Imagen del producto",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF37474F)
             )
             
             OutlinedTextField(
                 value = currentImageUrl ?: "",
                 onValueChange = onImageUploaded,
-                label = { Text("URL de imagen") },
+                label = { Text("URL de imagen (opcional)") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 placeholder = { Text("https://...") }
             )
             
             Text(
-                text = "💡 En Web puedes ingresar la URL directamente",
-                fontSize = 11.sp,
-                color = Color(0xFF666666)
+                text = "En Web puedes ingresar la URL directamente",
+                fontSize = 10.sp,
+                color = Color(0xFF757575)
             )
         }
     }
