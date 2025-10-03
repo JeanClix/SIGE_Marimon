@@ -16,9 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
-import okhttp3.*
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
+import org.marimon.sigc.storage.SupabaseStorageManager
 
 
 @Composable
@@ -30,9 +28,7 @@ actual fun SimpleImageUploader(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var uploading by remember { mutableStateOf(false) }
-    
-    val client = OkHttpClient.Builder()
-        .build()
+    val storageManager = remember { SupabaseStorageManager() }
     
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -42,12 +38,11 @@ actual fun SimpleImageUploader(
             
             scope.launch {
                 try {
-                    val uploadedUrl = uploadImageToSupabase(selectedUri, context, client)
+                    val uploadedUrl = storageManager.subirImagenProducto(selectedUri, context)
                     uploading = false
                     onImageUploaded(uploadedUrl)
                 } catch (e: Exception) {
                     uploading = false
-                    println("Error subiendo imagen: ${e.message}")
                     onImageUploaded(null)
                 }
             }
@@ -185,56 +180,6 @@ actual fun SimpleImageUploader(
                     )
                 }
             }
-        }
-    }
-}
-
-suspend fun uploadImageToSupabase(uri: Uri, context: Context, client: OkHttpClient): String? {
-    return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-        try {
-            val timestamp = System.currentTimeMillis()
-            val fileName = "producto_$timestamp.jpg"
-
-            // Obtener bytes de la imagen
-            val inputStream = context.contentResolver.openInputStream(uri)
-                ?: throw Exception("No se puede abrir el archivo")
-
-            val imageBytes = inputStream.readBytes()
-            inputStream.close()
-
-            // Usar FormData multipart
-            val requestBody = MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart(
-                    "file",
-                    fileName,
-                    imageBytes.toRequestBody("image/jpeg".toMediaType())
-                )
-                .build()
-
-            val request = Request.Builder()
-                .url("https://toothspciydsgevyxkol.supabase.co/storage/v1/object/productos-imagenes/$fileName")
-                .post(requestBody)
-                .addHeader("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvb3Roc3BjaXlkc2dldnl4a29sIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODk0NjgxMSwiZXhwIjoyMDc0NTIyODExfQ.k5k5V01RszFVjA94NdS_drlrXvG-5m50t7B_hGFQMDY")
-                .addHeader("apikey", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvb3Roc3BjaXlkc2dldnl4a29sIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODk0NjgxMSwiZXhwIjoyMDc0NTIyODExfQ.k5k5V01RszFVjA94NdS_drlrXvG-5m50t7B_hGFQMDY")
-                .build()
-
-            // Ejecutar request
-            client.newCall(request).execute().use { response ->
-                if (response.isSuccessful) {
-                    // Generar URL pública
-                    val publicUrl = "https://toothspciydsgevyxkol.supabase.co/storage/v1/object/public/productos-imagenes/$fileName"
-                    println("✅ Imagen subida exitosamente: $publicUrl")
-                    publicUrl
-                } else {
-                    println("❌ Error subiendo imagen: ${response.code}")
-                    null
-                }
-            }
-
-        } catch (e: Exception) {
-            println("❌ Error subiendo imagen: ${e.message}")
-            null
         }
     }
 }
