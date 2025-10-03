@@ -86,10 +86,13 @@ class ProductoViewModel : ViewModel() {
                 }
 
                 if (response.status.isSuccess()) {
+                    println("✅ Producto creado exitosamente")
                     onSuccess()
                     cargarProductos() // Recargar la lista
                 } else {
-                    onError("Error al crear producto: ${response.status}")
+                    val errorMessage = "Error al crear producto: ${response.status}"
+                    println("❌ $errorMessage")
+                    onError(errorMessage)
                 }
             } catch (e: Exception) {
                 onError("Error: ${e.message}")

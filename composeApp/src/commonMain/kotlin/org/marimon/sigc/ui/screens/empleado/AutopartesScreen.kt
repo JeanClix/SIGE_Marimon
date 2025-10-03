@@ -22,8 +22,11 @@ import androidx.compose.ui.layout.ContentScale
 import org.marimon.sigc.model.Empleado
 import org.marimon.sigc.ui.components.ProductImage
 import org.marimon.sigc.model.Producto
+import org.marimon.sigc.ui.icons.MarimonIcons
 import org.marimon.sigc.viewmodel.AuthViewModel
 import org.marimon.sigc.viewmodel.ProductoViewModel
+import org.marimon.sigc.model.ProductoCreate
+import org.marimon.sigc.ui.components.SimpleImageUploader
 
 // Colores Marimon
 private val RedPure = Color(0xFFFF0000)
@@ -43,6 +46,7 @@ fun AutopartesScreen(
 ) {
     var searchText by remember { mutableStateOf("") }
     var currentPage by remember { mutableIntStateOf(1) }
+    var showRegistroDialog by remember { mutableStateOf(false) }
     
     // ViewModel para manejar productos
     val productoViewModel = remember { ProductoViewModel() }
@@ -98,7 +102,7 @@ fun AutopartesScreen(
                         onClick = onBack
                     ) {
                         Text(
-                            text = "← Volver",
+                            text = "${MarimonIcons.Back} Volver",
                             color = Color.White,
                             fontSize = 16.sp
                         )
@@ -193,7 +197,10 @@ fun AutopartesScreen(
                 )
                 
                 Button(
-                    onClick = { },
+                    onClick = { 
+                        println("DEBUG: Abriendo diálogo de registro")
+                        showRegistroDialog = true 
+                    },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = RedPure
                     ),
@@ -201,7 +208,7 @@ fun AutopartesScreen(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Text(
-                        text = "➕",
+                        text = MarimonIcons.Add,
                         fontSize = 18.sp
                     )
                     Spacer(modifier = Modifier.width(4.dp))
@@ -228,7 +235,7 @@ fun AutopartesScreen(
                 },
                 trailingIcon = {
                     Text(
-                        text = "🔍",
+                        text = MarimonIcons.Search,
                         fontSize = 20.sp
                     )
                 },
@@ -278,7 +285,7 @@ fun AutopartesScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "🔍",
+                            text = MarimonIcons.Search,
                             fontSize = 48.sp
                         )
                         Spacer(modifier = Modifier.height(16.dp))
@@ -370,6 +377,29 @@ fun AutopartesScreen(
                     )
                 }
             }
+            
+            // Diálogo de registro de productos
+            if (showRegistroDialog) {
+                ProductoRegistroDialog(
+                    onDismiss = { 
+                        println("DEBUG: Cerrando diálogo de registro")
+                        showRegistroDialog = false 
+                    },
+                    onConfirmar = { productoCreate ->
+                        println("DEBUG: Registrando producto: ${productoCreate.nombre}")
+                        productoViewModel.crearProducto(
+                            producto = productoCreate,
+                            onSuccess = {
+                                println("DEBUG: Producto registrado exitosamente")
+                                showRegistroDialog = false
+                            },
+                            onError = { error ->
+                                println("DEBUG: Error al registrar producto: $error")
+                            }
+                        )
+                    }
+                )
+            }
         }
     }
 }
@@ -382,14 +412,14 @@ private fun ProductCard(
 ) {
     // Determinar emoji basado en el nombre del producto
     val emoji = when {
-        producto.nombre.contains("aceite", ignoreCase = true) -> "🛢️"
-        producto.nombre.contains("llanta", ignoreCase = true) -> "🛞"
-        producto.nombre.contains("filtro", ignoreCase = true) -> "🔧"
-        producto.nombre.contains("freno", ignoreCase = true) -> "⚙️"
-        producto.nombre.contains("motor", ignoreCase = true) -> "🔩"
-        producto.nombre.contains("bateria", ignoreCase = true) -> "🔋"
-        producto.nombre.contains("luz", ignoreCase = true) -> "💡"
-        else -> "🔧" // Emoji por defecto
+        producto.nombre.contains("aceite", ignoreCase = true) -> MarimonIcons.Oil
+        producto.nombre.contains("llanta", ignoreCase = true) -> MarimonIcons.Tire
+        producto.nombre.contains("filtro", ignoreCase = true) -> MarimonIcons.Filter
+        producto.nombre.contains("freno", ignoreCase = true) -> MarimonIcons.Brake
+        producto.nombre.contains("motor", ignoreCase = true) -> MarimonIcons.Engine
+        producto.nombre.contains("bateria", ignoreCase = true) -> MarimonIcons.Battery
+        producto.nombre.contains("luz", ignoreCase = true) -> MarimonIcons.Light
+        else -> MarimonIcons.Tools // Icono por defecto
     }
     
     // Determinar color del borde basado en stock
@@ -463,7 +493,7 @@ private fun ProductCard(
                     contentPadding = PaddingValues(vertical = 6.dp)
                 ) {
                     Text(
-                        text = "✏️",
+                        text = MarimonIcons.Edit,
                         fontSize = 14.sp
                     )
                     Spacer(modifier = Modifier.width(4.dp))
@@ -484,7 +514,7 @@ private fun ProductCard(
                     contentPadding = PaddingValues(vertical = 6.dp)
                 ) {
                     Text(
-                        text = "🗑️",
+                        text = MarimonIcons.Delete,
                         fontSize = 14.sp
                     )
                     Spacer(modifier = Modifier.width(4.dp))
@@ -496,4 +526,161 @@ private fun ProductCard(
             }
         }
     }
+}
+
+@Composable
+private fun ProductoRegistroDialog(
+    onDismiss: () -> Unit,
+    onConfirmar: (ProductoCreate) -> Unit
+) {
+    var codigo by remember { mutableStateOf("") }
+    var nombre by remember { mutableStateOf("") }
+    var descripcion by remember { mutableStateOf("") }
+    var especificaciones by remember { mutableStateOf("") }
+    var precio by remember { mutableStateOf("") }
+    var cantidad by remember { mutableStateOf("") }
+    var imagenUrl by remember { mutableStateOf("") }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = MarimonIcons.Add,
+                    fontSize = 24.sp
+                )
+                Text(
+                    text = "Registrar Nuevo Producto",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedTextField(
+                    value = codigo,
+                    onValueChange = { codigo = it },
+                    label = { Text("Código *") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = RedPure,
+                        focusedLabelColor = RedPure
+                    )
+                )
+                
+                OutlinedTextField(
+                    value = nombre,
+                    onValueChange = { nombre = it },
+                    label = { Text("Nombre *") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = RedPure,
+                        focusedLabelColor = RedPure
+                    )
+                )
+                
+                OutlinedTextField(
+                    value = descripcion,
+                    onValueChange = { descripcion = it },
+                    label = { Text("Descripción") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 2,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = RedPure,
+                        focusedLabelColor = RedPure
+                    )
+                )
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = precio,
+                        onValueChange = { precio = it },
+                        label = { Text("Precio *") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = RedPure,
+                            focusedLabelColor = RedPure
+                        )
+                    )
+                    
+                    OutlinedTextField(
+                        value = cantidad,
+                        onValueChange = { cantidad = it },
+                        label = { Text("Stock *") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = RedPure,
+                            focusedLabelColor = RedPure
+                        )
+                    )
+                }
+                
+                // Sección para imagen simplificada
+                SimpleImageUploader(
+                    currentImageUrl = imagenUrl,
+                    onImageUploaded = { url ->
+                        imagenUrl = url ?: ""
+                        println("DEBUG: Imagen actualizada: $url")
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (codigo.isNotBlank() && nombre.isNotBlank() && precio.isNotBlank() && cantidad.isNotBlank()) {
+                        val precioDouble = precio.toDoubleOrNull() ?: 0.0
+                        val cantidadInt = cantidad.toIntOrNull() ?: 0
+                        
+                        val nuevoProducto = ProductoCreate(
+                            codigo = codigo.trim(),
+                            nombre = nombre.trim(),
+                            descripcion = if (descripcion.isNotBlank()) descripcion.trim() else null,
+                            especificaciones = if (especificaciones.isNotBlank()) especificaciones.trim() else null,
+                            precio = precioDouble,
+                            cantidad = cantidadInt,
+                            imagenUrl = if (imagenUrl.isNotBlank()) imagenUrl.trim() else null,
+                            activo = true
+                        )
+                        
+                        println("DEBUG: Creando producto con imagen: ${nuevoProducto.imagenUrl}")
+                        onConfirmar(nuevoProducto)
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = RedPure),
+                enabled = codigo.isNotBlank() && nombre.isNotBlank() && precio.isNotBlank() && cantidad.isNotBlank()
+            ) {
+                Text(
+                    text = "${MarimonIcons.Add} Registrar",
+                    color = Color.White
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = "Cancelar",
+                    color = TextSecondary
+                )
+            }
+        },
+        containerColor = Color.White,
+        titleContentColor = TextPrimary
+    )
 }

@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.marimon.sigc.model.Empleado
+import org.marimon.sigc.ui.icons.MarimonIcons
 import org.marimon.sigc.viewmodel.AuthViewModel
 
 // Colores Marimon
@@ -189,7 +190,7 @@ fun EmpleadoScreen(
                         
                         // Administrar Autopartes
                         NavigationOption(
-                            icon = "🔧",
+                            icon = MarimonIcons.Tools,
                             title = "Administrar Autopartes",
                             description = "Gestionar inventario de repuestos y autopartes",
                             enabled = true,

@@ -14,11 +14,13 @@ import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import java.text.SimpleDateFormat
 import java.util.*
+import org.marimon.sigc.config.SupabaseConfig
+import org.marimon.sigc.config.SupabaseCredentials
 
 class SupabaseStorageManager {
 
-    // Configuración de Supabase Storage
-    private val bucketName = "empleados"
+    // Configuración de Supabase Storage usando las nuevas credenciales
+    private val bucketName = SupabaseConfig.STORAGE_BUCKET // "productos-imagenes"
         
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -109,17 +111,17 @@ class SupabaseStorageManager {
                     .build()
 
                 val request = Request.Builder()
-                    .url("https://xjqjlllzbcrpcylhnlmh.supabase.co/storage/v1/object/producto/$fileName")
+                    .url("${SupabaseConfig.SUPABASE_URL}/storage/v1/object/$bucketName/$fileName")
                     .post(requestBody)
-                    .addHeader("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcWpsbGx6YmNycGN5bGhubG1oIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODk0NjgxMSwiZXhwIjoyMDc0NTIyODExfQ.4c5oU47ZA7FYyVwlrVVY6_sL9cLr5pMeEs6E5R4yspE")
-                    .addHeader("apikey", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcWpsbGx6YmNycGN5bGhubG1oIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODk0NjgxMSwiZXhwIjoyMDc0NTIyODExfQ.4c5oU47ZA7FYyVwlrVVY6_sL9cLr5pMeEs6E5R4yspE")
+                    .addHeader("Authorization", "Bearer ${SupabaseConfig.SUPABASE_SERVICE_KEY}")
+                    .addHeader("apikey", SupabaseConfig.SUPABASE_SERVICE_KEY)
                     .build()
 
                 // Ejecutar request
                 client.newCall(request).execute().use { response ->
                     if (response.isSuccessful) {
                         // Generar URL pública
-                        val publicUrl = "https://xjqjlllzbcrpcylhnlmh.supabase.co/storage/v1/object/public/producto/$fileName"
+                        val publicUrl = "${SupabaseConfig.STORAGE_BASE_URL}/$fileName"
                         publicUrl
                     } else {
                         Log.w("SupabaseStorage", "Error subiendo imagen de producto: ${response.code}")
