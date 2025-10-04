@@ -90,7 +90,8 @@ class SupabaseStorageManager {
                 }
                 
             } catch (e: Exception) {
-                Log.w("SupabaseStorage", "Error subiendo imagen", e)
+                Log.e("SupabaseStorage", "Error subiendo imagen", e)
+                Log.e("SupabaseStorage", "Error details: ${e.message}")
                 null
             }
         }

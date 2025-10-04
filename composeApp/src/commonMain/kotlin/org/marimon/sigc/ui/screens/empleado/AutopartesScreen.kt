@@ -630,103 +630,14 @@ private fun ProductoRegistroDialog(
                     )
                 }
                 
-                // Sección para imagen simplificada
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "📷 Imagen del producto",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF333333)
-                    )
-                    
-                    if (imagenUrl.isBlank()) {
-                        // Mostrar estado sin imagen
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Ninguna imagen seleccionada",
-                                fontSize = 12.sp,
-                                color = Color(0xFF757575)
-                            )
-                            
-                            Button(
-                                onClick = {
-                                    // TODO: Implementar selección de imagen
-                                    imagenUrl = "https://via.placeholder.com/150" // Temporal para testing
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF333333)
-                                ),
-                                modifier = Modifier.height(32.dp),
-                                contentPadding = PaddingValues(horizontal = 12.dp)
-                            ) {
-                                Text(
-                                    text = "+ Agregar",
-                                    color = Color.White,
-                                    fontSize = 10.sp
-                                )
-                            }
-                        }
-                    } else {
-                        // Mostrar estado con imagen
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Text(
-                                    text = "✓",
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF4CAF50)
-                                )
-                                Text(
-                                    text = "Imagen agregada",
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF4CAF50),
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                            
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                OutlinedButton(
-                                    onClick = {
-                                        imagenUrl = "https://via.placeholder.com/150" // Temporal
-                                    },
-                                    modifier = Modifier.height(24.dp),
-                                    contentPadding = PaddingValues(horizontal = 8.dp),
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        contentColor = Color(0xFF666666)
-                                    )
-                                ) {
-                                    Text(text = "Cambiar", fontSize = 9.sp)
-                                }
-                                
-                                OutlinedButton(
-                                    onClick = { imagenUrl = "" },
-                                    modifier = Modifier.height(24.dp),
-                                    contentPadding = PaddingValues(horizontal = 8.dp),
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        contentColor = Color(0xFF999999)
-                                    )
-                                ) {
-                                    Text(text = "Quitar", fontSize = 9.sp)
-                                }
-                            }
-                        }
-                    }
-                }
+                // Sección para imagen usando SimpleImageUploader
+                SimpleImageUploader(
+                    currentImageUrl = imagenUrl,
+                    onImageUploaded = { newImageUrl ->
+                        imagenUrl = newImageUrl ?: ""
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         },
         confirmButton = {

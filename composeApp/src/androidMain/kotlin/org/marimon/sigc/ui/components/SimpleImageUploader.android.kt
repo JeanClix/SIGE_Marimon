@@ -2,6 +2,7 @@ package org.marimon.sigc.ui.components
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -32,19 +33,26 @@ actual fun SimpleImageUploader(
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
+        Log.d("ImageUploader", "Image picker result: $uri")
         uri?.let { selectedUri ->
+            Log.d("ImageUploader", "Selected URI: $selectedUri")
             uploading = true
             
             scope.launch {
                 try {
+                    Log.d("ImageUploader", "Starting image upload...")
                     val uploadedUrl = storageManager.subirImagenProducto(selectedUri, context)
+                    Log.d("ImageUploader", "Upload completed. URL: $uploadedUrl")
                     uploading = false
                     onImageUploaded(uploadedUrl)
                 } catch (e: Exception) {
+                    Log.e("ImageUploader", "Error uploading image", e)
                     uploading = false
                     onImageUploaded(null)
                 }
             }
+        } ?: run {
+            Log.d("ImageUploader", "No image selected or selection cancelled")
         }
     }
     
@@ -88,8 +96,12 @@ actual fun SimpleImageUploader(
                     
                     Button(
                         onClick = {
+                            Log.d("ImageUploader", "Add image button clicked")
                             if (!uploading) {
+                                Log.d("ImageUploader", "Launching image picker...")
                                 imagePickerLauncher.launch("image/*")
+                            } else {
+                                Log.d("ImageUploader", "Upload in progress, ignoring click")
                             }
                         },
                         enabled = !uploading,
@@ -153,8 +165,12 @@ actual fun SimpleImageUploader(
                         // Botón Cambiar (más pequeño)
                         OutlinedButton(
                             onClick = {
+                                Log.d("ImageUploader", "Change image button clicked")
                                 if (!uploading) {
+                                    Log.d("ImageUploader", "Launching image picker for change...")
                                     imagePickerLauncher.launch("image/*")
+                                } else {
+                                    Log.d("ImageUploader", "Upload in progress, ignoring change click")
                                 }
                             },
                             enabled = !uploading,
