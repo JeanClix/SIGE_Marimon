@@ -22,7 +22,7 @@ class ProductoViewModel : ViewModel() {
     fun cargarProductos() {
         viewModelScope.launch {
             try {
-                val url = "${SupabaseConfig.SUPABASE_URL}/rest/v1/productos?select=*&order=fecha_creacion.desc"
+                val url = "${SupabaseConfig.SUPABASE_URL}/rest/v1/productos?select=*&activo=eq.true&order=fecha_creacion.desc"
                 val headers = mapOf(
                     "apikey" to SupabaseConfig.SUPABASE_ANON_KEY,
                     "Authorization" to "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}"

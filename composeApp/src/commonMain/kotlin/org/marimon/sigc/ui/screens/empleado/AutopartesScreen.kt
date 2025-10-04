@@ -2,6 +2,7 @@ package org.marimon.sigc.ui.screens.empleado
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -48,7 +49,9 @@ fun AutopartesScreen(
     var currentPage by remember { mutableIntStateOf(1) }
     var showRegistroDialog by remember { mutableStateOf(false) }
     var showEditarDialog by remember { mutableStateOf(false) }
+    var showEliminarDialog by remember { mutableStateOf(false) }
     var productoAEditar by remember { mutableStateOf<Producto?>(null) }
+    var productoAEliminar by remember { mutableStateOf<Producto?>(null) }
     
     // ViewModel para manejar productos
     val productoViewModel = remember { ProductoViewModel() }
@@ -325,15 +328,8 @@ fun AutopartesScreen(
                             },
                             onDelete = { 
                                 println("DEBUG: Eliminar producto ${producto.nombre}")
-                                productoViewModel.eliminarProducto(
-                                    productoId = producto.id,
-                                    onSuccess = {
-                                        println("DEBUG: Producto eliminado exitosamente")
-                                    },
-                                    onError = { error ->
-                                        println("DEBUG: Error al eliminar producto: $error")
-                                    }
-                                )
+                                productoAEliminar = producto
+                                showEliminarDialog = true
                             }
                         )
                     }
@@ -424,6 +420,32 @@ fun AutopartesScreen(
                             },
                             onError = { error ->
                                 println("DEBUG: Error al editar producto: $error")
+                            }
+                        )
+                    }
+                )
+            }
+            
+            // Diálogo de confirmación de eliminación
+            if (showEliminarDialog && productoAEliminar != null) {
+                ProductoEliminarDialog(
+                    producto = productoAEliminar!!,
+                    onDismiss = { 
+                        println("DEBUG: Cerrando diálogo de eliminación")
+                        showEliminarDialog = false
+                        productoAEliminar = null
+                    },
+                    onConfirmar = { productoParaEliminar ->
+                        println("DEBUG: Eliminando producto: ${productoParaEliminar.nombre}")
+                        productoViewModel.eliminarProducto(
+                            productoId = productoParaEliminar.id,
+                            onSuccess = {
+                                println("DEBUG: Producto eliminado exitosamente")
+                                showEliminarDialog = false
+                                productoAEliminar = null
+                            },
+                            onError = { error ->
+                                println("DEBUG: Error al eliminar producto: $error")
                             }
                         )
                     }
@@ -522,17 +544,13 @@ private fun ProductCard(
                     contentPadding = PaddingValues(vertical = 6.dp)
                 ) {
                     Text(
-                        text = MarimonIcons.Edit,
-                        fontSize = 14.sp
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
                         text = "Editar",
-                        fontSize = 11.sp
+                        fontSize = 11.sp,
+                        color = Color.White
                     )
                 }
                 
-                // Botón Borrar
+                // Botón Eliminar
                 Button(
                     onClick = onDelete,
                     modifier = Modifier.weight(1f),
@@ -543,13 +561,9 @@ private fun ProductCard(
                     contentPadding = PaddingValues(vertical = 6.dp)
                 ) {
                     Text(
-                        text = MarimonIcons.Delete,
-                        fontSize = 14.sp
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Borrar",
-                        fontSize = 11.sp
+                        text = "Eliminar",
+                        fontSize = 11.sp,
+                        color = Color.White
                     )
                 }
             }
@@ -875,6 +889,112 @@ fun ProductoEditarDialog(
                 Text(
                     text = "${MarimonIcons.Edit} Actualizar",
                     color = Color.White
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = "Cancelar",
+                    color = TextSecondary
+                )
+            }
+        },
+        containerColor = Color.White,
+        titleContentColor = TextPrimary
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProductoEliminarDialog(
+    producto: Producto,
+    onDismiss: () -> Unit,
+    onConfirmar: (Producto) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "⚠️",
+                    fontSize = 24.sp
+                )
+                Text(
+                    text = "Eliminar Producto",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "¿Estás seguro de que deseas eliminar este producto?",
+                    fontSize = 14.sp,
+                    color = TextPrimary
+                )
+                
+                // Información del producto
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = BackgroundLight
+                    ),
+                    border = BorderStroke(1.dp, BorderColor)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "📦 ${producto.nombre}",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "Código: ${producto.codigo}",
+                            fontSize = 12.sp,
+                            color = TextSecondary
+                        )
+                        Text(
+                            text = "Precio: S/ ${producto.precio}",
+                            fontSize = 12.sp,
+                            color = TextSecondary
+                        )
+                        Text(
+                            text = "Stock: ${producto.cantidad}",
+                            fontSize = 12.sp,
+                            color = TextSecondary
+                        )
+                    }
+                }
+                
+                Text(
+                    text = "Esta acción marcará el producto como inactivo y no se podrá deshacer.",
+                    fontSize = 12.sp,
+                    color = RedPure,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirmar(producto) },
+                colors = ButtonDefaults.buttonColors(containerColor = RedPure)
+            ) {
+                Text(
+                    text = "Eliminar",
+                    color = Color.White,
+                    fontWeight = FontWeight.Medium
                 )
             }
         },
