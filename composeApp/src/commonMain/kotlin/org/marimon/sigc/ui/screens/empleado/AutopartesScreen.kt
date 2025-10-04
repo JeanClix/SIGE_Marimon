@@ -47,6 +47,8 @@ fun AutopartesScreen(
     var searchText by remember { mutableStateOf("") }
     var currentPage by remember { mutableIntStateOf(1) }
     var showRegistroDialog by remember { mutableStateOf(false) }
+    var showEditarDialog by remember { mutableStateOf(false) }
+    var productoAEditar by remember { mutableStateOf<Producto?>(null) }
     
     // ViewModel para manejar productos
     val productoViewModel = remember { ProductoViewModel() }
@@ -318,7 +320,8 @@ fun AutopartesScreen(
                             producto = producto,
                             onEdit = { 
                                 println("DEBUG: Editar producto ${producto.nombre}")
-                                // TODO: Implementar edición
+                                productoAEditar = producto
+                                showEditarDialog = true
                             },
                             onDelete = { 
                                 println("DEBUG: Eliminar producto ${producto.nombre}")
@@ -395,6 +398,32 @@ fun AutopartesScreen(
                             },
                             onError = { error ->
                                 println("DEBUG: Error al registrar producto: $error")
+                            }
+                        )
+                    }
+                )
+            }
+            
+            // Diálogo de edición de productos
+            if (showEditarDialog && productoAEditar != null) {
+                ProductoEditarDialog(
+                    producto = productoAEditar!!,
+                    onDismiss = { 
+                        println("DEBUG: Cerrando diálogo de edición")
+                        showEditarDialog = false
+                        productoAEditar = null
+                    },
+                    onConfirmar = { productoEditado ->
+                        println("DEBUG: Editando producto: ${productoEditado.nombre}")
+                        productoViewModel.editarProducto(
+                            producto = productoEditado,
+                            onSuccess = {
+                                println("DEBUG: Producto editado exitosamente")
+                                showEditarDialog = false
+                                productoAEditar = null
+                            },
+                            onError = { error ->
+                                println("DEBUG: Error al editar producto: $error")
                             }
                         )
                     }
@@ -667,6 +696,184 @@ private fun ProductoRegistroDialog(
             ) {
                 Text(
                     text = "${MarimonIcons.Add} Registrar",
+                    color = Color.White
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = "Cancelar",
+                    color = TextSecondary
+                )
+            }
+        },
+        containerColor = Color.White,
+        titleContentColor = TextPrimary
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProductoEditarDialog(
+    producto: Producto,
+    onDismiss: () -> Unit,
+    onConfirmar: (Producto) -> Unit
+) {
+    var codigo by remember { mutableStateOf(producto.codigo) }
+    var nombre by remember { mutableStateOf(producto.nombre) }
+    var descripcion by remember { mutableStateOf(producto.descripcion ?: "") }
+    var especificaciones by remember { mutableStateOf(producto.especificaciones ?: "") }
+    var precio by remember { mutableStateOf(producto.precio.toString()) }
+    var cantidad by remember { mutableStateOf(producto.cantidad.toString()) }
+    var imagenUrl by remember { mutableStateOf(producto.imagenUrl ?: "") }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = MarimonIcons.Edit,
+                    fontSize = 24.sp
+                )
+                Text(
+                    text = "Editar Producto",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Código y Nombre
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = codigo,
+                        onValueChange = { codigo = it },
+                        label = { Text("Código *") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = RedPure,
+                            focusedLabelColor = RedPure
+                        )
+                    )
+                    
+                    OutlinedTextField(
+                        value = nombre,
+                        onValueChange = { nombre = it },
+                        label = { Text("Nombre *") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = RedPure,
+                            focusedLabelColor = RedPure
+                        )
+                    )
+                }
+                
+                // Descripción
+                OutlinedTextField(
+                    value = descripcion,
+                    onValueChange = { descripcion = it },
+                    label = { Text("Descripción") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 2,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = RedPure,
+                        focusedLabelColor = RedPure
+                    )
+                )
+                
+                // Especificaciones
+                OutlinedTextField(
+                    value = especificaciones,
+                    onValueChange = { especificaciones = it },
+                    label = { Text("Especificaciones") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 2,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = RedPure,
+                        focusedLabelColor = RedPure
+                    )
+                )
+                
+                // Precio y Stock
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = precio,
+                        onValueChange = { precio = it },
+                        label = { Text("Precio *") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = RedPure,
+                            focusedLabelColor = RedPure
+                        )
+                    )
+                    
+                    OutlinedTextField(
+                        value = cantidad,
+                        onValueChange = { cantidad = it },
+                        label = { Text("Stock *") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = RedPure,
+                            focusedLabelColor = RedPure
+                        )
+                    )
+                }
+                
+                // Sección para imagen usando SimpleImageUploader
+                SimpleImageUploader(
+                    currentImageUrl = imagenUrl,
+                    onImageUploaded = { newImageUrl ->
+                        imagenUrl = newImageUrl ?: ""
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val precioDouble = precio.toDoubleOrNull() ?: 0.0
+                    val cantidadInt = cantidad.toIntOrNull() ?: 0
+                    
+                    val productoEditado = Producto(
+                        id = producto.id,
+                        codigo = codigo.trim(),
+                        nombre = nombre.trim(),
+                        descripcion = if (descripcion.isNotBlank()) descripcion.trim() else null,
+                        especificaciones = if (especificaciones.isNotBlank()) especificaciones.trim() else null,
+                        precio = precioDouble,
+                        cantidad = cantidadInt,
+                        imagenUrl = if (imagenUrl.isNotBlank()) imagenUrl.trim() else null,
+                        activo = producto.activo
+                    )
+                    
+                    println("DEBUG: Editando producto con imagen: ${productoEditado.imagenUrl}")
+                    onConfirmar(productoEditado)
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = RedPure),
+                enabled = codigo.isNotBlank() && nombre.isNotBlank() && precio.isNotBlank() && cantidad.isNotBlank()
+            ) {
+                Text(
+                    text = "${MarimonIcons.Edit} Actualizar",
                     color = Color.White
                 )
             }
