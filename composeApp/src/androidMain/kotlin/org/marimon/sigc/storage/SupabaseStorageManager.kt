@@ -29,7 +29,7 @@ class SupabaseStorageManager {
      * Sube una imagen a Supabase Storage
      */
     suspend fun subirImagen(uri: Uri, context: Context): String? {
-        return subirImagenGeneral(uri, context, "empleados", "empleado")
+        return subirImagenGeneral(uri, context, "empleados_imagenes", "empleado")
     }
     
     /**
