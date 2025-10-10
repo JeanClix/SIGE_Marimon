@@ -39,7 +39,8 @@ fun EmpleadoScreen(
     empleado: Empleado,
     authViewModel: AuthViewModel,
     onLogout: () -> Unit,
-    onNavigateToAutopartes: () -> Unit = { }
+    onNavigateToAutopartes: () -> Unit = { },
+    onNavigateToEySAutopartes: () -> Unit = { }
 ) {
     Column(
         modifier = Modifier
@@ -200,7 +201,17 @@ fun EmpleadoScreen(
                                 println("DEBUG: onNavigateToAutopartes() ejecutado")
                             }
                         )
-                        
+
+                        //Administrar Entradas y salidas
+                        NavigationOption(
+                            icon = "📦",
+                            title = "Movimiento de Inventario",
+                            description = "Registrar entradas y salidas de productos",
+                            enabled = true,
+                            onItemClick = onNavigateToEySAutopartes
+                        )
+
+
                         // Otras opciones futuras
                         NavigationOption(
                             icon = "🚗",

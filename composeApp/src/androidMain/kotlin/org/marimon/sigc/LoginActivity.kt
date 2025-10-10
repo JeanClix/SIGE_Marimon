@@ -10,6 +10,7 @@ import androidx.compose.runtime.collectAsState
 import org.marimon.sigc.ui.screens.LoginScreen
 import org.marimon.sigc.ui.screens.EmpleadoScreen
 import org.marimon.sigc.ui.screens.empleado.AutopartesScreen
+import org.marimon.sigc.ui.screens.empleado.EySAutopartesScreen
 import org.marimon.sigc.viewmodel.AuthViewModel
 
 class LoginActivity : ComponentActivity() {
@@ -18,7 +19,7 @@ class LoginActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 val authViewModel = remember { AuthViewModel() }
-    val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
+                val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
                 val userType by authViewModel.userType.collectAsState()
                 val currentEmpleado by authViewModel.currentEmpleado.collectAsState()
                 
@@ -63,6 +64,11 @@ class LoginActivity : ComponentActivity() {
                                         println("DEBUG: onNavigateToAutopartes callback ejecutado")
                                         currentScreen = "autopartes"
                                         println("DEBUG: currentScreen establecido a: autopartes")
+                                    },
+                                    onNavigateToEySAutopartes = {
+                                        println("DEBUG: onNavigateToEySAutopartes callback ejecutado")
+                                        currentScreen = "eys_autopartes"
+                                        println("DEBUG: currentScreen establecido a: eys_autopartes")
                                     }
                                 )
                             }
@@ -73,6 +79,16 @@ class LoginActivity : ComponentActivity() {
                                     authViewModel = authViewModel,
                                     onBack = {
                                         println("DEBUG: onBack callback ejecutado")
+                                        currentScreen = "empleado"
+                                        println("DEBUG: currentScreen establecido a: empleado")
+                                    }
+                                )
+                            }
+                            "eys_autopartes" -> {
+                                println("DEBUG: Mostrando EySAutopartesScreen")
+                                EySAutopartesScreen(
+                                    onNavigateBack = {
+                                        println("DEBUG: onNavigateBack (EyS) callback ejecutado")
                                         currentScreen = "empleado"
                                         println("DEBUG: currentScreen establecido a: empleado")
                                     }
