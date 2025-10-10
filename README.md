@@ -1,82 +1,148 @@
-This is a Kotlin Multiplatform project targeting Android, iOS, Web, Server.
+# 🏢 SIGE Marimon - Sistema de Gestión Empresarial
 
-* [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./composeApp/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./composeApp/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./composeApp/src/jvmMain/kotlin)
-    folder is the appropriate location.
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.2.20-blue.svg)](https://kotlinlang.org/)
+[![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-1.9.0-green.svg)](https://www.jetbrains.com/lp/compose-multiplatform/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-* [/iosApp](./iosApp/iosApp) contains iOS applications. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+Un sistema de gestión empresarial moderno desarrollado con **Kotlin Multiplatform** y **Jetpack Compose**, diseñado para ser multiplataforma y escalable.
 
-* [/server](./server/src/main/kotlin) is for the Ktor server application.
+## ✨ Características
 
-* [/shared](./shared/src) is for the code that will be shared between all targets in the project.
-  The most important subfolder is [commonMain](./shared/src/commonMain/kotlin). If preferred, you
-  can add code to the platform-specific folders here too.
+- 🔐 **Sistema de Login** con autenticación segura
+- 📱 **Multiplataforma**: Web, Android, iOS, Desktop
+- 🎨 **UI Moderna** con Material Design 3
+- 🏗️ **Arquitectura Limpia** con MVVM
+- ⚡ **Hot Reload** para desarrollo rápido
+- 🔄 **Estado Reactivo** con StateFlow
 
-### Build and Run Android Application
+## 🚀 Inicio Rápido
 
-To build and run the development version of the Android app, use the run configuration from the run widget
-in your IDE’s toolbar or build it directly from the terminal:
-- on macOS/Linux
-  ```shell
-  ./gradlew :composeApp:assembleDebug
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :composeApp:assembleDebug
-  ```
+### Prerrequisitos
+- Java 11 o superior
+- Git
 
-### Build and Run Server
+### Instalación y Ejecución
 
-To build and run the development version of the server, use the run configuration from the run widget
-in your IDE’s toolbar or run it directly from the terminal:
-- on macOS/Linux
-  ```shell
-  ./gradlew :server:run
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :server:run
-  ```
+1. **Clonar el repositorio**
+```bash
+git clone https://github.com/JeanClix/SIGE_Marimon.git
+cd SIGE_Marimon
+```
 
-### Build and Run Web Application
+2. **Ejecutar en Web** (Recomendado para desarrollo)
+```bash
+./gradlew :composeApp:jsBrowserDevelopmentRun
+```
 
-To build and run the development version of the web app, use the run configuration from the run widget
-in your IDE's toolbar or run it directly from the terminal:
-- for the Wasm target (faster, modern browsers):
-  - on macOS/Linux
-    ```shell
-    ./gradlew :composeApp:wasmJsBrowserDevelopmentRun
-    ```
-  - on Windows
-    ```shell
-    .\gradlew.bat :composeApp:wasmJsBrowserDevelopmentRun
-    ```
-- for the JS target (slower, supports older browsers):
-  - on macOS/Linux
-    ```shell
-    ./gradlew :composeApp:jsBrowserDevelopmentRun
-    ```
-  - on Windows
-    ```shell
-    .\gradlew.bat :composeApp:jsBrowserDevelopmentRun
-    ```
+3. **Acceder a la aplicación**
+- URL: `http://localhost:3000`
 
-### Build and Run iOS Application
+### 🔑 Credenciales de Prueba
 
-To build and run the development version of the iOS app, use the run configuration from the run widget
-in your IDE’s toolbar or open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+| Rol | Usuario | Contraseña |
+|-----|---------|------------|
+| Administrador | `admin` | `admin123` |
+| Usuario | `usuario` | `user123` |
+
+## 📖 Documentación
+
+- 📋 **[Guía de Ejecución](GUIA_EJECUCION.md)** - Instrucciones detalladas
+- 🏗️ **[Estructura del Proyecto](PROJECT_STRUCTURE.md)** - Arquitectura y organización
+- 🔧 **[Cambiar Puerto](GUIA_EJECUCION.md#-cambiar-puerto-del-servidor)** - Configuración de puertos
+
+## 🏗️ Arquitectura
+
+```
+composeApp/src/commonMain/kotlin/org/marimon/sigc/
+├── data/
+│   ├── model/           # Modelos de datos
+│   └── repository/      # Repositorios
+├── ui/
+│   ├── screens/         # Pantallas
+│   └── components/      # Componentes reutilizables
+├── navigation/          # Navegación
+├── viewmodel/          # ViewModels
+└── App.kt              # Punto de entrada
+```
+
+## 🛠️ Tecnologías Utilizadas
+
+- **Kotlin Multiplatform** - Desarrollo multiplataforma
+- **Jetpack Compose** - UI declarativa moderna
+- **Material Design 3** - Sistema de diseño
+- **StateFlow** - Manejo de estado reactivo
+- **Coroutines** - Programación asíncrona
+- **Gradle** - Sistema de construcción
+
+## 📱 Plataformas Soportadas
+
+- ✅ **Web** (JavaScript/WASM)
+- ✅ **Android** (API 24+)
+- ✅ **iOS** (iOS 13+)
+- ✅ **Desktop** (JVM)
+
+## 🔄 Flujo de Desarrollo
+
+1. **Hacer cambios** en el código
+2. **Hot reload automático** en el navegador
+3. **Probar funcionalidades** con credenciales de prueba
+4. **Commit y push** a la rama `feature/login`
+
+## 🐛 Solución de Problemas
+
+### Puerto en uso
+```bash
+# Cambiar puerto en composeApp/webpack.config.d/port.js
+config.devServer.port = 4000
+```
+
+### Error de compilación
+```bash
+./gradlew clean
+./gradlew :composeApp:compileKotlinJs
+```
+
+### Dependencias faltantes
+```bash
+./gradlew :composeApp:kotlinNpmInstall
+```
+
+## 📋 Roadmap
+
+- [ ] Gestión de empleados
+- [ ] Configuración del sistema
+- [ ] Base de datos local
+- [ ] API REST
+- [ ] Notificaciones push
+- [ ] Reportes y estadísticas
+
+## 🤝 Contribución
+
+1. Fork el proyecto
+2. Crear una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`)
+3. Commit tus cambios (`git commit -m 'Agregar nueva funcionalidad'`)
+4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
+5. Abrir un Pull Request
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
+
+## 👥 Equipo
+
+- **Desarrollador Principal**: JeanClix
+- **Contribuidores**: [Lista de contribuidores](CONTRIBUTORS.md)
+
+## 📞 Soporte
+
+Si tienes preguntas o necesitas ayuda:
+
+- 📧 **Email**: [tu-email@ejemplo.com]
+- 🐛 **Issues**: [GitHub Issues](https://github.com/JeanClix/SIGE_Marimon/issues)
+- 💬 **Discusiones**: [GitHub Discussions](https://github.com/JeanClix/SIGE_Marimon/discussions)
 
 ---
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html),
-[Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform/#compose-multiplatform),
-[Kotlin/Wasm](https://kotl.in/wasm/)…
+**¡Gracias por usar SIGE Marimon!** 🎉
 
-We would appreciate your feedback on Compose/Web and Kotlin/Wasm in the public Slack channel [#compose-web](https://slack-chats.kotlinlang.org/c/compose-web).
-If you face any issues, please report them on [YouTrack](https://youtrack.jetbrains.com/newIssue?project=CMP).
+*Desarrollado con ❤️ usando Kotlin Multiplatform y Jetpack Compose*
