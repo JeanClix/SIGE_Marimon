@@ -11,6 +11,8 @@ import org.marimon.sigc.ui.screens.LoginScreen
 import org.marimon.sigc.ui.screens.EmpleadoScreen
 import org.marimon.sigc.ui.screens.empleado.AutopartesScreen
 import org.marimon.sigc.ui.screens.empleado.EySAutopartesScreen
+import org.marimon.sigc.ui.screens.empleado.productos.EntradaProductosScreen
+import org.marimon.sigc.ui.screens.empleado.productos.SalidaProductosScreen
 import org.marimon.sigc.viewmodel.AuthViewModel
 
 class LoginActivity : ComponentActivity() {
@@ -87,10 +89,41 @@ class LoginActivity : ComponentActivity() {
                             "eys_autopartes" -> {
                                 println("DEBUG: Mostrando EySAutopartesScreen")
                                 EySAutopartesScreen(
+                                    empleado = currentEmpleado!!,
                                     onNavigateBack = {
                                         println("DEBUG: onNavigateBack (EyS) callback ejecutado")
                                         currentScreen = "empleado"
                                         println("DEBUG: currentScreen establecido a: empleado")
+                                    },
+                                    onNavigateToEntrada = {
+                                        println("DEBUG: Navegando a entrada de productos")
+                                        currentScreen = "entrada_productos"
+                                    },
+                                    onNavigateToSalida = {
+                                        println("DEBUG: Navegando a salida de productos")
+                                        currentScreen = "salida_productos"
+                                    }
+                                )
+                            }
+                            "entrada_productos" -> {
+                                println("DEBUG: Mostrando EntradaProductosScreen")
+                                EntradaProductosScreen(
+                                    empleado = currentEmpleado!!,
+                                    onNavigateBack = {
+                                        println("DEBUG: onNavigateBack (Entrada) callback ejecutado")
+                                        currentScreen = "eys_autopartes"
+                                        println("DEBUG: currentScreen establecido a: eys_autopartes")
+                                    }
+                                )
+                            }
+                            "salida_productos" -> {
+                                println("DEBUG: Mostrando SalidaProductosScreen")
+                                SalidaProductosScreen(
+                                    empleado = currentEmpleado!!,
+                                    onNavigateBack = {
+                                        println("DEBUG: onNavigateBack (Salida) callback ejecutado")
+                                        currentScreen = "eys_autopartes"
+                                        println("DEBUG: currentScreen establecido a: eys_autopartes")
                                     }
                                 )
                             }
