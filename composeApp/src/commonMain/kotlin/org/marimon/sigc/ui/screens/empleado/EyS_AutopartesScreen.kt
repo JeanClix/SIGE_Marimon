@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.marimon.sigc.model.Empleado
 import org.marimon.sigc.ui.components.EmpleadoTopBar
+import org.marimon.sigc.viewmodel.MovimientoViewModel
 
 // --- Colores y Estilos ---
 private val RedMarimon = Color(0xFFFF0000)
@@ -33,6 +34,13 @@ fun EySAutopartesScreen(
     onNavigateToEntrada: () -> Unit = {},
     onNavigateToSalida: () -> Unit = {}
 ) {
+    // Pre-cargar movimientos para navegación más rápida
+    val movimientoViewModel = remember { MovimientoViewModel() }
+    
+    LaunchedEffect(Unit) {
+        movimientoViewModel.precargarMovimientos()
+    }
+    
     Scaffold(
         topBar = {
             EmpleadoTopBar(

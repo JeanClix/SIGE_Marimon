@@ -68,10 +68,15 @@ fun SalidaProductosScreen(
     }
     
     // Filtrar movimientos por búsqueda y ordenar cronológicamente (más nuevos primero)
-    val movimientosFiltrados = remember(movimientos, searchText) {
-        val filtrados = filterMovimientos(movimientos, searchText)
+    val movimientosFiltrados = remember(movimientos.toList(), searchText) {
+        val filtrados = filterMovimientos(movimientos.toList(), searchText)
         // Ordenar por fecha de registro, más nuevos primero
-        filtrados.sortedByDescending { it.fechaRegistro }
+        val result = filtrados.sortedByDescending { it.fechaRegistro }
+        println("[SalidaScreen] Movimientos filtrados: ${result.size}, Total: ${movimientos.size}")
+        result.forEach { movimiento ->
+            println("[SalidaScreen] Movimiento: ID=${movimiento.id}, Producto=${movimiento.productoNombre}, Cantidad=${movimiento.cantidad}")
+        }
+        result
     }
     
     // Estado de paginación
@@ -197,7 +202,7 @@ fun SalidaProductosScreen(
             AlertDialog(
                 onDismissRequest = { showRegistroDialog = false },
                 title = {
-                    Text("✅ Salida Registrada", fontWeight = FontWeight.Bold)
+                    Text("Salida Registrada", fontWeight = FontWeight.Bold)
                 },
                 text = {
                     Text("La salida de producto se ha registrado correctamente.")

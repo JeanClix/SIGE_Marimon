@@ -10,6 +10,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import org.marimon.sigc.config.SupabaseClient
@@ -19,13 +20,18 @@ import org.marimon.sigc.model.MovimientoCreate
 import org.marimon.sigc.model.TipoMovimiento
 
 class MovimientoViewModel : ViewModel() {
-    val movimientos: SnapshotStateList<Movimiento> = mutableStateListOf()
+    private val _movimientos = mutableStateListOf<Movimiento>()
+    val movimientos: SnapshotStateList<Movimiento> = _movimientos
     
     private val _isLoading = mutableStateOf(false)
-    val isLoading = _isLoading.value
+    val isLoading get() = _isLoading.value
     
     private val _error = mutableStateOf<String?>(null)
-    val error = _error.value
+    val error get() = _error.value
+    
+    // Cache simple para evitar cargas innecesarias
+    private var ultimoTipoCargado: TipoMovimiento? = null
+    private var cacheValido: Boolean = false
     
     fun cargarMovimientos() {
         _isLoading.value = true
@@ -43,14 +49,14 @@ class MovimientoViewModel : ViewModel() {
 
                 if (response.status.isSuccess()) {
                     val movimientosJson = Json.parseToJsonElement(response.bodyAsText()).jsonArray
-                    movimientos.clear()
+                    _movimientos.clear()
 
                     for (row in movimientosJson) {
                         val obj = row.jsonObject
                         val producto = obj["productos"]?.jsonObject
                         val empleado = obj["empleados"]?.jsonObject
                         
-                        movimientos.add(
+                        _movimientos.add(
                             Movimiento(
                                 id = obj["id"]!!.toString().toInt(),
                                 tipo = if (obj["tipo"]!!.toString().replace("\"", "") == "ENTRADA") TipoMovimiento.ENTRADA else TipoMovimiento.SALIDA,
@@ -75,19 +81,27 @@ class MovimientoViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 _error.value = "Error al cargar movimientos: ${e.message}"
-                println("❌ Error cargando movimientos: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
         }
     }
     
-    fun cargarMovimientosPorTipo(tipo: TipoMovimiento) {
+    fun cargarMovimientosPorTipo(tipo: TipoMovimiento, forzarRecarga: Boolean = false) {
+        // Verificar si ya tenemos datos del cache y no necesitamos recargar
+        val tieneCache = ultimoTipoCargado == tipo && cacheValido && !forzarRecarga
+        
+        if (tieneCache && _movimientos.isNotEmpty()) {
+            return
+        }
+        
         _isLoading.value = true
         viewModelScope.launch {
             try {
                 val tipoStr = if (tipo == TipoMovimiento.ENTRADA) "ENTRADA" else "SALIDA"
-                val url = "${SupabaseConfig.SUPABASE_URL}/rest/v1/movimientos?select=*,productos(nombre,codigo,imagen_url),empleados(nombre)&activo=eq.true&tipo=eq.$tipoStr&order=fecha_registro.desc"
+                
+                // Usar directamente la consulta simplificada que sabemos que funciona
+                val url = "${SupabaseConfig.SUPABASE_URL}/rest/v1/movimientos?activo=eq.true&tipo=eq.$tipoStr&order=fecha_registro.desc"
                 val headers = mapOf(
                     "apikey" to SupabaseConfig.SUPABASE_ANON_KEY,
                     "Authorization" to "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}"
@@ -98,15 +112,16 @@ class MovimientoViewModel : ViewModel() {
                 }
 
                 if (response.status.isSuccess()) {
-                    val movimientosJson = Json.parseToJsonElement(response.bodyAsText()).jsonArray
-                    movimientos.clear()
+                    val responseBody = response.bodyAsText()
+                    val movimientosJson = Json.parseToJsonElement(responseBody).jsonArray
+                    _movimientos.clear()
 
                     for (row in movimientosJson) {
                         val obj = row.jsonObject
-                        val producto = obj["productos"]?.jsonObject
-                        val empleado = obj["empleados"]?.jsonObject
+                        val producto = obj["Producto"]?.jsonObject
+                        val empleado = obj["Empleado"]?.jsonObject
                         
-                        movimientos.add(
+                        _movimientos.add(
                             Movimiento(
                                 id = obj["id"]!!.toString().toInt(),
                                 tipo = if (obj["tipo"]!!.toString().replace("\"", "") == "ENTRADA") TipoMovimiento.ENTRADA else TipoMovimiento.SALIDA,
@@ -127,13 +142,148 @@ class MovimientoViewModel : ViewModel() {
                     }
                     _error.value = null
                 } else {
-                    _error.value = "Error al cargar movimientos: ${response.status}"
+                    // Intentar consulta simplificada sin JOIN
+                    val urlSimple = "${SupabaseConfig.SUPABASE_URL}/rest/v1/movimientos?activo=eq.true&tipo=eq.$tipoStr&order=fecha_registro.desc"
+                    
+                    val responseSimple = SupabaseClient.httpClient.get(urlSimple) {
+                        headers.forEach { (k, v) -> header(k, v) }
+                    }
+                    
+                    if (responseSimple.status.isSuccess()) {
+                        val responseBodySimple = responseSimple.bodyAsText()
+                        val movimientosJsonSimple = Json.parseToJsonElement(responseBodySimple).jsonArray
+                        _movimientos.clear()
+                        
+                        // Recopilar todos los IDs únicos de productos y empleados
+                        val productosIds = mutableSetOf<Int>()
+                        val empleadosIds = mutableSetOf<Int>()
+                        
+                        val movimientosData = mutableListOf<Pair<JsonObject, Pair<Int, Int>>>()
+                        
+                        for (row in movimientosJsonSimple) {
+                            val obj = row.jsonObject
+                            val productoId = obj["producto_id"]!!.toString().toInt()
+                            val empleadoId = obj["empleado_id"]!!.toString().toInt()
+                            
+                            productosIds.add(productoId)
+                            empleadosIds.add(empleadoId)
+                            movimientosData.add(obj to (productoId to empleadoId))
+                        }
+                        
+                        // Buscar información de todos los productos y empleados de una vez
+                        // Como las tablas productos y empleados dan 404, usar datos de la nota
+                        val productosInfo = mutableMapOf<Int, Triple<String, String?, String?>>()
+                        val empleadosInfo = mutableMapOf<Int, String>()
+                        
+                        // Extraer información de las notas y usar consultas directas para obtener información de productos y empleados
+                        for ((obj, ids) in movimientosData) {
+                            val nota = obj["nota"]?.toString()?.replace("\"", "") ?: ""
+                            val (productoId, empleadoId) = ids
+                            
+                            // Extraer nombre del producto de la nota si está disponible
+                            if (nota.contains("Producto:")) {
+                                val productoNombre = nota.substringAfter("Producto: ").substringBefore(" - Empleado:")
+                                if (productoNombre.isNotBlank()) {
+                                    productosInfo[productoId] = Triple(productoNombre, "COD-$productoId", null)
+                                }
+                            } else if (nota.contains("Categoría:")) {
+                                // Para notas con formato de categoría, intentar extraer de otra manera
+                                val categoria = nota.substringAfter("Categoría: ").substringBefore(" - Empleado:")
+                                productosInfo[productoId] = Triple("Producto de $categoria", "COD-$productoId", null)
+                            }
+                            
+                            // Extraer nombre del empleado de la nota si está disponible
+                            if (nota.contains("Empleado:")) {
+                                val empleadoNombre = nota.substringAfter("Empleado: ").trim()
+                                if (empleadoNombre.isNotBlank()) {
+                                    empleadosInfo[empleadoId] = empleadoNombre
+                                }
+                            }
+                        }
+                        
+                        // Intentar obtener información adicional de productos directamente
+                        val productosInfoAdicional = buscarInfoProductos(productosIds.toList())
+                        productosInfoAdicional.forEach { (id, info) ->
+                            if (!productosInfo.containsKey(id)) {
+                                productosInfo[id] = info
+                            }
+                        }
+                        
+                        // Intentar obtener información adicional de empleados directamente  
+                        val empleadosInfoAdicional = buscarInfoEmpleados(empleadosIds.toList())
+                        empleadosInfoAdicional.forEach { (id, nombre) ->
+                            if (!empleadosInfo.containsKey(id)) {
+                                empleadosInfo[id] = nombre
+                            }
+                        }
+                        
+                        // Crear los movimientos con la información obtenida
+                        for ((obj, ids) in movimientosData) {
+                            val (productoId, empleadoId) = ids
+                            val productoInfo = productosInfo[productoId]
+                            val empleadoInfo = empleadosInfo[empleadoId]
+                            
+                            val movimiento = Movimiento(
+                                id = obj["id"]!!.toString().toInt(),
+                                tipo = if (obj["tipo"]!!.toString().replace("\"", "") == "ENTRADA") TipoMovimiento.ENTRADA else TipoMovimiento.SALIDA,
+                                productoId = productoId,
+                                empleadoId = empleadoId,
+                                cantidad = obj["cantidad"]!!.toString().toInt(),
+                                nota = obj["nota"]?.toString()?.replace("\"", "")?.trim(),
+                                fechaRegistro = obj["fecha_registro"]!!.toString().replace("\"", ""),
+                                createdAt = obj["created_at"]!!.toString().replace("\"", ""),
+                                updatedAt = obj["updated_at"]!!.toString().replace("\"", ""),
+                                activo = obj["activo"]!!.toString().toBoolean(),
+                                productoNombre = productoInfo?.first ?: "Producto ID: $productoId",
+                                productoCodigo = productoInfo?.second ?: "COD-$productoId",
+                                productoImagenUrl = productoInfo?.third,
+                                empleadoNombre = empleadoInfo ?: "Empleado ID: $empleadoId"
+                            )
+                            
+                            _movimientos.add(movimiento)
+                        }
+                        
+                        // Actualizar cache
+                        cacheValido = true
+                        ultimoTipoCargado = tipo
+                        
+                        _error.value = null
+                    } else {
+                        val errorMsg = "Error al cargar movimientos: ${response.status}"
+                        _error.value = errorMsg
+                    }
                 }
             } catch (e: Exception) {
-                _error.value = "Error al cargar movimientos: ${e.message}"
-                println("❌ Error cargando movimientos por tipo: ${e.message}")
+                val errorMsg = "Error al cargar movimientos: ${e.message}"
+                _error.value = errorMsg
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+    
+    /**
+     * Pre-carga todos los movimientos para mejorar la velocidad de navegación
+     */
+    fun precargarMovimientos() {
+        viewModelScope.launch {
+            try {
+                // Pre-cargar entradas y salidas en paralelo
+                val url = "${SupabaseConfig.SUPABASE_URL}/rest/v1/movimientos?activo=eq.true&order=fecha_registro.desc"
+                val headers = mapOf(
+                    "apikey" to SupabaseConfig.SUPABASE_ANON_KEY,
+                    "Authorization" to "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}"
+                )
+
+                val response: HttpResponse = SupabaseClient.httpClient.get(url) {
+                    headers.forEach { (k, v) -> header(k, v) }
+                }
+
+                if (response.status.isSuccess()) {
+                    // Los datos se procesan cuando se llama cargarMovimientosPorTipo
+                }
+            } catch (e: Exception) {
+                // Error silencioso en pre-carga
             }
         }
     }
@@ -174,10 +324,6 @@ class MovimientoViewModel : ViewModel() {
                     }
                 """.trimIndent()
 
-                println("🔍 Enviando datos a Supabase:")
-                println("   URL: $url")
-                println("   Body: $body")
-
                 val response: HttpResponse = SupabaseClient.httpClient.post(url) {
                     headers.forEach { (k, v) -> header(k, v) }
                     setBody(body)
@@ -188,11 +334,11 @@ class MovimientoViewModel : ViewModel() {
                     val updateStockSuccess = actualizarStockProducto(movimiento.productoId, movimiento.cantidad, movimiento.tipo)
                     
                     if (updateStockSuccess) {
-                        println("✅ Movimiento registrado exitosamente")
                         _error.value = null
                         onSuccess()
                         
-                        // 3. Recargar movimientos para mostrar el nuevo
+                        // 3. Invalidar cache y recargar movimientos para mostrar el nuevo
+                        cacheValido = false
                         cargarMovimientosPorTipo(movimiento.tipo)
                     } else {
                         _error.value = "Movimiento registrado pero error actualizando stock"
@@ -200,9 +346,6 @@ class MovimientoViewModel : ViewModel() {
                     }
                 // Si hay error 409, intentar crear la tabla automáticamente
                 } else if (response.status.value == 409) {
-                    println("❌ Error 409 - Posible problema de estructura de tabla")
-                    println("🔄 Intentando registrar con estructura alternativa...")
-                    
                     // Intentar con estructura mínima
                     val bodyMinimo = """
                         {
@@ -219,11 +362,11 @@ class MovimientoViewModel : ViewModel() {
                     }
                     
                     if (responseAlternativo.status.isSuccess()) {
-                        println("✅ Registro exitoso con estructura mínima")
                         val updateStockSuccess = actualizarStockProducto(movimiento.productoId, movimiento.cantidad, movimiento.tipo)
                         if (updateStockSuccess) {
                             _error.value = null
                             onSuccess()
+                            cacheValido = false
                             cargarMovimientosPorTipo(movimiento.tipo)
                         } else {
                             onError("Movimiento registrado pero error actualizando stock")
@@ -231,8 +374,6 @@ class MovimientoViewModel : ViewModel() {
                     } else {
                         val responseBody = try { responseAlternativo.bodyAsText() } catch (e: Exception) { "Sin detalles" }
                         val errorMessage = "Error 409: Conflicto en base de datos. Verifica que las tablas existan."
-                        println("❌ $errorMessage")
-                        println("❌ Respuesta: $responseBody")
                         _error.value = errorMessage
                         onError(errorMessage)
                     }
@@ -244,9 +385,6 @@ class MovimientoViewModel : ViewModel() {
                         "No se pudo obtener el cuerpo de la respuesta" 
                     }
                     val errorMessage = "Error al registrar movimiento: ${response.status}"
-                    println("❌ $errorMessage")
-                    println("❌ Detalles del error: $responseBody")
-                    println("❌ Datos enviados: $body")
                     _error.value = errorMessage
                     onError(errorMessage)
                 }
@@ -254,7 +392,6 @@ class MovimientoViewModel : ViewModel() {
                 val errorMessage = "Error: ${e.message}"
                 _error.value = errorMessage
                 onError(errorMessage)
-                println("❌ Error registrando movimiento: ${e.message}")
             }
         }
         return true // Retorna true inmediatamente, el resultado real se maneja en los callbacks
@@ -275,14 +412,11 @@ class MovimientoViewModel : ViewModel() {
             if (response.status.isSuccess()) {
                 val productos = Json.parseToJsonElement(response.bodyAsText()).jsonArray
                 val existe = productos.isNotEmpty()
-                println("🔍 Verificación producto ID $productoId: ${if (existe) "✅ Existe" else "❌ No existe"}")
                 existe
             } else {
-                println("❌ Error verificando producto: ${response.status}")
                 false
             }
         } catch (e: Exception) {
-            println("❌ Error verificando producto: ${e.message}")
             false
         }
     }
@@ -314,7 +448,6 @@ class MovimientoViewModel : ViewModel() {
                     
                     // Validar que no quede en negativo para salidas
                     if (nuevoStock < 0) {
-                        println("❌ Error: Stock insuficiente. Stock actual: $stockActual, cantidad solicitada: $cantidad")
                         return false
                     }
                     
@@ -338,31 +471,99 @@ class MovimientoViewModel : ViewModel() {
                     }
 
                     if (updateResponse.status.isSuccess()) {
-                        println("✅ Stock actualizado: $stockActual → $nuevoStock")
                         return true
                     } else {
-                        println("❌ Error actualizando stock: ${updateResponse.status}")
                         return false
                     }
                 } else {
-                    println("❌ Producto no encontrado")
                     return false
                 }
             } else {
-                println("❌ Error obteniendo stock actual: ${getResponse.status}")
                 return false
             }
         } catch (e: Exception) {
-            println("❌ Error actualizando stock: ${e.message}")
             false
         }
     }
     
     fun obtenerMovimientosPorProducto(productoId: Int): List<Movimiento> {
-        return movimientos.filter { it.productoId == productoId }
+        return _movimientos.filter { it.productoId == productoId }
     }
     
     fun obtenerUltimosMovimientos(limit: Int = 10): List<Movimiento> {
-        return movimientos.take(limit)
+        return _movimientos.take(limit)
+    }
+    
+    // Función auxiliar para buscar información de múltiples productos
+    private suspend fun buscarInfoProductos(productosIds: List<Int>): Map<Int, Triple<String, String?, String?>> {
+    return try {
+        if (productosIds.isEmpty()) return emptyMap()
+        val idsStr = productosIds.joinToString(",")
+        val url = "${SupabaseConfig.SUPABASE_URL}/rest/v1/productos?id=in.($idsStr)"
+            val headers = mapOf(
+                "apikey" to SupabaseConfig.SUPABASE_ANON_KEY,
+                "Authorization" to "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}"
+            )
+            
+            val response = SupabaseClient.httpClient.get(url) {
+                headers.forEach { (k, v) -> header(k, v) }
+            }
+            
+            if (response.status.isSuccess()) {
+                val responseBody = response.bodyAsText()
+                val productosJson = Json.parseToJsonElement(responseBody).jsonArray
+                val result = mutableMapOf<Int, Triple<String, String?, String?>>()
+                
+                for (productoJson in productosJson) {
+                    val producto = productoJson.jsonObject
+                    val id = producto["id"]!!.toString().toInt()
+                    result[id] = Triple(
+                        producto["nombre"]?.toString()?.replace("\"", "") ?: "Producto Desconocido",
+                        producto["codigo"]?.toString()?.replace("\"", ""),
+                        producto["imagen_url"]?.toString()?.replace("\"", "")
+                    )
+                }
+                result
+            } else {
+                emptyMap()
+            }
+        } catch (e: Exception) {
+            emptyMap()
+        }
+    }
+    
+    // Función auxiliar para buscar información de múltiples empleados
+    private suspend fun buscarInfoEmpleados(empleadosIds: List<Int>): Map<Int, String> {
+        return try {
+            if (empleadosIds.isEmpty()) return emptyMap()
+            
+            val idsStr = empleadosIds.joinToString(",")
+            val url = "${SupabaseConfig.SUPABASE_URL}/rest/v1/Empleado?id=in.($idsStr)"
+            val headers = mapOf(
+                "apikey" to SupabaseConfig.SUPABASE_ANON_KEY,
+                "Authorization" to "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}"
+            )
+            
+            val response = SupabaseClient.httpClient.get(url) {
+                headers.forEach { (k, v) -> header(k, v) }
+            }
+            
+            if (response.status.isSuccess()) {
+                val responseBody = response.bodyAsText()
+                val empleadosJson = Json.parseToJsonElement(responseBody).jsonArray
+                val result = mutableMapOf<Int, String>()
+                
+                for (empleadoJson in empleadosJson) {
+                    val empleado = empleadoJson.jsonObject
+                    val id = empleado["id"]!!.toString().toInt()
+                    result[id] = empleado["nombre"]?.toString()?.replace("\"", "") ?: "Empleado Desconocido"
+                }
+                result
+            } else {
+                emptyMap()
+            }
+        } catch (e: Exception) {
+            emptyMap()
+        }
     }
 }

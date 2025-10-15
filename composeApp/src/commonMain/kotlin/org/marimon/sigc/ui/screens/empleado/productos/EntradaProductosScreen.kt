@@ -69,10 +69,15 @@ fun EntradaProductosScreen(
     }
     
     // Filtrar movimientos por búsqueda y ordenar cronológicamente (más nuevos primero)
-    val movimientosFiltrados = remember(movimientos, searchText) {
-        val filtrados = filterMovimientos(movimientos, searchText)
+    val movimientosFiltrados = remember(movimientos.toList(), searchText) {
+        val filtrados = filterMovimientos(movimientos.toList(), searchText)
         // Ordenar por fecha de registro, más nuevos primero
-        filtrados.sortedByDescending { it.fechaRegistro }
+        val result = filtrados.sortedByDescending { it.fechaRegistro }
+        println("🔍 [EntradaScreen] Movimientos filtrados: ${result.size}, Total: ${movimientos.size}")
+        result.forEach { movimiento ->
+            println("🔍 [EntradaScreen] Movimiento: ID=${movimiento.id}, Producto=${movimiento.productoNombre}, Cantidad=${movimiento.cantidad}")
+        }
+        result
     }
     
     // Estado de paginación

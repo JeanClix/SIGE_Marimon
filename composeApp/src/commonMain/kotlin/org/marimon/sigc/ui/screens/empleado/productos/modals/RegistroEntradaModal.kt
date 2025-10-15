@@ -82,7 +82,7 @@ fun RegistroEntradaModal(
         movimientoViewModel.registrarMovimiento(
             movimiento = movimiento,
             onSuccess = {
-                successMessage = "Entrada registrada exitosamente"
+                successMessage = "Se han registrado ${cantidad.toInt()} unidades del ${selectedProduct!!.nombre} en Inventario"
                 onRegistrar()
             },
             onError = { error ->
