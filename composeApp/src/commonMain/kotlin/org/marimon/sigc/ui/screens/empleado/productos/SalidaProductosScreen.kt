@@ -32,6 +32,9 @@ import org.marimon.sigc.ui.components.MovimientoEmptyState
 import org.marimon.sigc.ui.components.PaginationControls
 import org.marimon.sigc.ui.components.rememberPaginationState
 import org.marimon.sigc.ui.components.filterMovimientos
+import org.marimon.sigc.ui.components.MovimientoFilters
+import org.marimon.sigc.ui.components.FilterButton
+import org.marimon.sigc.ui.components.MovimientoFiltersModal
 import org.marimon.sigc.ui.components.modals.RegistroSalidaModal
 import org.marimon.sigc.viewmodel.ProductoViewModel
 import org.marimon.sigc.viewmodel.MovimientoViewModel
@@ -53,9 +56,10 @@ fun SalidaProductosScreen(
     empleado: Empleado,
     onNavigateBack: () -> Unit
 ) {
-    var searchText by remember { mutableStateOf("") }
+    var filters by remember { mutableStateOf(MovimientoFilters()) }
     var showRegistroDialog by remember { mutableStateOf(false) }
     var showRegistroForm by remember { mutableStateOf(false) }
+    var showFiltersModal by remember { mutableStateOf(false) }
     var currentPage by remember { mutableIntStateOf(1) }
     
     // ViewModels
@@ -67,9 +71,36 @@ fun SalidaProductosScreen(
         movimientoViewModel.cargarMovimientosPorTipo(TipoMovimiento.SALIDA)
     }
     
-    // Filtrar movimientos por búsqueda y ordenar cronológicamente (más nuevos primero)
-    val movimientosFiltrados = remember(movimientos.toList(), searchText) {
-        val filtrados = filterMovimientos(movimientos.toList(), searchText)
+    // Obtener lista de productos únicos para el filtro
+    val availableProducts = remember(movimientos.toList()) {
+        movimientos.mapNotNull { it.productoNombre }.distinct().sorted()
+    }
+    
+    // Obtener lista de categorías únicas (extraídas de las notas)
+    val availableCategories = remember(movimientos.toList()) {
+        movimientos.mapNotNull { movimiento ->
+            movimiento.nota?.let { nota ->
+                if (nota.contains("Categoría:")) {
+                    nota.substringAfter("Categoría: ").substringBefore(" -").trim()
+                } else null
+            }
+        }.distinct().sorted()
+    }
+    
+    // Calcular número de filtros activos (excluyendo búsqueda)
+    val activeFiltersCount = remember(filters) {
+        var count = 0
+        if (filters.selectedProducto != null) count++
+        if (filters.selectedCategoria != null) count++
+        if (filters.fechaDesde != null) count++
+        if (filters.fechaHasta != null) count++
+        if (filters.tipo != null) count++
+        count
+    }
+    
+    // Filtrar movimientos por filtros y ordenar cronológicamente (más nuevos primero)
+    val movimientosFiltrados = remember(movimientos.toList(), filters) {
+        val filtrados = filterMovimientos(movimientos.toList(), filters)
         // Ordenar por fecha de registro, más nuevos primero
         val result = filtrados.sortedByDescending { it.fechaRegistro }
         println("[SalidaScreen] Movimientos filtrados: ${result.size}, Total: ${movimientos.size}")
@@ -133,18 +164,42 @@ fun SalidaProductosScreen(
                 }
             }
             
-            // Buscador
-            OutlinedTextField(
-                value = searchText,
-                onValueChange = { searchText = it },
-                label = { Text("Buscar movimiento...") },
+            // Barra de búsqueda y botón de filtros
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = RSalida,
-                    focusedLabelColor = RSalida
-                ),
-                shape = RoundedCornerShape(12.dp)
-            )
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = filters.searchText,
+                    onValueChange = { 
+                        filters = filters.copy(searchText = it)
+                        currentPage = 1
+                    },
+                    label = { Text("Buscar movimiento...") },
+                    modifier = Modifier.weight(1f),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = RSalida,
+                        focusedLabelColor = RSalida
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    trailingIcon = {
+                        if (filters.searchText.isNotEmpty()) {
+                            IconButton(onClick = { 
+                                filters = filters.copy(searchText = "")
+                                currentPage = 1
+                            }) {
+                                Text("✕", fontSize = 18.sp, color = TextSecondaryColor)
+                            }
+                        }
+                    }
+                )
+                
+                FilterButton(
+                    onClick = { showFiltersModal = true },
+                    activeFiltersCount = activeFiltersCount,
+                    accentColor = RSalida
+                )
+            }
             
             Spacer(modifier = Modifier.height(16.dp))
             
@@ -156,11 +211,18 @@ fun SalidaProductosScreen(
                     subtitle = "Registra la primera salida de productos",
                     modifier = Modifier.weight(1f).fillMaxWidth()
                 )
-            } else if (paginationState.itemsInCurrentPage.isEmpty() && searchText.isNotBlank()) {
+            } else if (paginationState.itemsInCurrentPage.isEmpty() && filters.searchText.isNotBlank()) {
                 MovimientoEmptyState(
                     emoji = "🔍",
                     title = "No se encontraron salidas",
-                    subtitle = "Intenta con otros términos de búsqueda",
+                    subtitle = "Intenta con otros términos de búsqueda o ajusta los filtros",
+                    modifier = Modifier.weight(1f).fillMaxWidth()
+                )
+            } else if (paginationState.itemsInCurrentPage.isEmpty()) {
+                MovimientoEmptyState(
+                    emoji = "🔍",
+                    title = "No se encontraron resultados",
+                    subtitle = "Intenta ajustar los filtros aplicados",
                     modifier = Modifier.weight(1f).fillMaxWidth()
                 )
             } else {
@@ -197,7 +259,25 @@ fun SalidaProductosScreen(
                 movimientoViewModel = movimientoViewModel,
                 empleado = empleado
             )
-        }        // Diálogo de confirmación de registro exitoso
+        }
+        
+        // Modal de filtros
+        if (showFiltersModal) {
+            MovimientoFiltersModal(
+                filters = filters,
+                onFiltersChange = { newFilters ->
+                    filters = newFilters
+                    currentPage = 1
+                },
+                onDismiss = { showFiltersModal = false },
+                availableProducts = availableProducts,
+                availableCategories = availableCategories,
+                showTipoFilter = false,
+                accentColor = RSalida
+            )
+        }
+        
+        // Diálogo de confirmación de registro exitoso
         if (showRegistroDialog) {
             AlertDialog(
                 onDismissRequest = { showRegistroDialog = false },
