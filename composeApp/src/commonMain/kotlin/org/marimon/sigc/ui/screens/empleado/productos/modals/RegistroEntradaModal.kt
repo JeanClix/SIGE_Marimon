@@ -7,10 +7,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.marimon.sigc.model.Producto
@@ -42,48 +44,54 @@ fun RegistroEntradaModal(
     var newProductName by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
     var successMessage by remember { mutableStateOf("") }
-    
+    var showSuccessDialog by remember { mutableStateOf(false) }
+    var cantidadRegistrada by remember { mutableStateOf(0) }
+    var productoRegistrado by remember { mutableStateOf("") }
+
     // ViewModels
     val productoViewModel = remember { ProductoViewModel() }
     val productos = productoViewModel.productos
-    
+
     // Cargar productos al inicializar
     LaunchedEffect(Unit) {
         productoViewModel.cargarProductos()
     }
-    
+
     val categorias = listOf("Filtros", "Frenos", "Motor", "Suspensión", "Eléctrico")
-    
+
     // Función para registrar entrada
     fun registrarEntrada() {
         errorMessage = ""
-        
+
         // Validaciones
         if (selectedProduct == null || selectedProduct?.id == 0) {
             errorMessage = "Debe seleccionar un producto válido"
             return
         }
-        
+
         if (cantidad.isBlank() || cantidad.toIntOrNull() == null || cantidad.toInt() <= 0) {
             errorMessage = "La cantidad debe ser un número mayor a 0"
             return
         }
-        
+
         // Crear movimiento
         val movimiento = MovimientoCreate(
             tipo = TipoMovimiento.ENTRADA,
             productoId = selectedProduct!!.id,
             empleadoId = empleado.id, // Usar el ID del empleado logueado
             cantidad = cantidad.toInt(),
-            nota = "Entrada registrada - Categoría: $categoria - Empleado: ${empleado.nombre}"
+            nota = "Entrada registrada - Producto: ${selectedProduct!!.nombre} - Empleado: ${empleado.nombre}"
         )
-        
+
         // Registrar en el ViewModel con callbacks
         movimientoViewModel.registrarMovimiento(
             movimiento = movimiento,
             onSuccess = {
-                successMessage = "Se han registrado ${cantidad.toInt()} unidades del ${selectedProduct!!.nombre} en Inventario"
-                onRegistrar()
+                // El MovimientoViewModel ya actualiza el stock automáticamente
+                // Guardar datos para el mensaje de éxito
+                cantidadRegistrada = cantidad.toInt()
+                productoRegistrado = selectedProduct!!.nombre
+                showSuccessDialog = true
             },
             onError = { error ->
                 errorMessage = error
@@ -91,6 +99,89 @@ fun RegistroEntradaModal(
         )
     }
 
+    // Mostrar solo el diálogo de éxito cuando corresponda
+    if (showSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showSuccessDialog = false
+                onDismiss()
+                onRegistrar()
+            },
+            icon = {
+                Column(
+                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .background(Color(0xFFFF383C), CircleShape),
+                        contentAlignment = androidx.compose.ui.Alignment.Center
+                    ) {
+                        Text(
+                            text = "✓",
+                            fontSize = 48.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "¡Registro Exitoso!",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimaryColor
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Se han registrado $cantidadRegistrada unidades de",
+                        fontSize = 16.sp,
+                        color = Color.Gray,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "\"$productoRegistrado\"",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFFF383C),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "en el inventario correctamente.",
+                        fontSize = 16.sp,
+                        color = Color.Gray,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showSuccessDialog = false
+                        onDismiss()
+                        onRegistrar()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFF383C)
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Aceptar", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
+        return // Salir para no mostrar el modal de registro
+    }
+
+    // Modal de registro
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -122,7 +213,7 @@ fun RegistroEntradaModal(
                         )
                     }
                 }
-                
+
                 // Categoría
                 Text(
                     "Categoría",
@@ -130,7 +221,7 @@ fun RegistroEntradaModal(
                     fontWeight = FontWeight.Bold,
                     color = TextPrimaryColor
                 )
-                
+
                 ExposedDropdownMenuBox(
                     expanded = expandedCategoria,
                     onExpandedChange = { expandedCategoria = !expandedCategoria }
@@ -164,7 +255,7 @@ fun RegistroEntradaModal(
                         }
                     }
                 }
-                
+
                 // Selector de Producto con Autocompletado
                 Text(
                     "Producto",
@@ -172,7 +263,7 @@ fun RegistroEntradaModal(
                     fontWeight = FontWeight.Bold,
                     color = TextPrimaryColor
                 )
-                
+
                 AutoCompleteProductField(
                     productos = productos,
                     selectedProduct = selectedProduct,
@@ -187,7 +278,7 @@ fun RegistroEntradaModal(
                     label = "Buscar producto...",
                     placeholder = "Escribe el nombre o código del producto"
                 )
-                
+
                 // Cantidad
                 Text(
                     "Cantidad",
@@ -195,11 +286,11 @@ fun RegistroEntradaModal(
                     fontWeight = FontWeight.Bold,
                     color = TextPrimaryColor
                 )
-                
+
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = cantidad,
-                        onValueChange = { 
+                        onValueChange = {
                             if (it.all { char -> char.isDigit() }) {
                                 cantidad = it
                                 errorMessage = "" // Limpiar error al cambiar
@@ -214,10 +305,10 @@ fun RegistroEntradaModal(
                         shape = RoundedCornerShape(12.dp),
                         isError = errorMessage.contains("cantidad")
                     )
-                    
+
                     // Botones + y -
                     IconButton(
-                        onClick = { 
+                        onClick = {
                             val current = cantidad.toIntOrNull() ?: 0
                             if (current > 0) {
                                 cantidad = (current - 1).toString()
@@ -230,9 +321,9 @@ fun RegistroEntradaModal(
                     ) {
                         Text("−", fontSize = 24.sp, fontWeight = FontWeight.Bold)
                     }
-                    
+
                     IconButton(
-                        onClick = { 
+                        onClick = {
                             val current = cantidad.toIntOrNull() ?: 0
                             cantidad = (current + 1).toString()
                             errorMessage = ""
@@ -244,7 +335,7 @@ fun RegistroEntradaModal(
                         Text("+", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 }
-                
+
                 // Información adicional si hay producto seleccionado
                 if (selectedProduct != null && selectedProduct?.id != 0) {
                     Text(
@@ -269,12 +360,12 @@ fun RegistroEntradaModal(
                 ) {
                     Text("Cancelar", color = Color.Black)
                 }
-                
+
                 Button(
                     onClick = { registrarEntrada() },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (selectedProduct?.id != 0 && categoria.isNotEmpty() && cantidad.isNotEmpty()) 
+                        containerColor = if (selectedProduct?.id != 0 && categoria.isNotEmpty() && cantidad.isNotEmpty())
                             REntrada else Color.Gray
                     ),
                     shape = RoundedCornerShape(8.dp),
@@ -287,12 +378,12 @@ fun RegistroEntradaModal(
         dismissButton = {},
         containerColor = Color.White
     )
-    
+
     // Diálogo para crear nuevo producto
     if (showCreateProductDialog) {
         AlertDialog(
-            onDismissRequest = { 
-                showCreateProductDialog = false 
+            onDismissRequest = {
+                showCreateProductDialog = false
                 newProductName = ""
             },
             title = { Text("Crear Nuevo Producto") },
@@ -320,8 +411,8 @@ fun RegistroEntradaModal(
             },
             dismissButton = {
                 TextButton(
-                    onClick = { 
-                        showCreateProductDialog = false 
+                    onClick = {
+                        showCreateProductDialog = false
                         newProductName = ""
                     }
                 ) {

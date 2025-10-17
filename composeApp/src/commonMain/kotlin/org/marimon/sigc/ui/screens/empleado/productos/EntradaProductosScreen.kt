@@ -60,27 +60,26 @@ fun EntradaProductosScreen(
     onNavigateBack: () -> Unit
 ) {
     var filters by remember { mutableStateOf(MovimientoFilters()) }
-    var showRegistroDialog by remember { mutableStateOf(false) }
     var showRegistroForm by remember { mutableStateOf(false) }
     var showFiltersModal by remember { mutableStateOf(false) }
     var showDetailModal by remember { mutableStateOf(false) }
     var selectedMovimiento by remember { mutableStateOf<Movimiento?>(null) }
     var currentPage by remember { mutableIntStateOf(1) }
-    
+
     // ViewModels
     val movimientoViewModel = remember { MovimientoViewModel() }
     val movimientos = movimientoViewModel.movimientos
-    
+
     // Cargar movimientos de entrada al inicializar
     LaunchedEffect(Unit) {
         movimientoViewModel.cargarMovimientosPorTipo(TipoMovimiento.ENTRADA)
     }
-    
+
     // Obtener lista de productos únicos para el filtro
     val availableProducts = remember(movimientos.toList()) {
         movimientos.mapNotNull { it.productoNombre }.distinct().sorted()
     }
-    
+
     // Obtener lista de categorías únicas (extraídas de las notas)
     val availableCategories = remember(movimientos.toList()) {
         movimientos.mapNotNull { movimiento ->
@@ -91,7 +90,7 @@ fun EntradaProductosScreen(
             }
         }.distinct().sorted()
     }
-    
+
     // Calcular número de filtros activos (excluyendo búsqueda)
     val activeFiltersCount = remember(filters) {
         var count = 0
@@ -102,7 +101,7 @@ fun EntradaProductosScreen(
         if (filters.tipo != null) count++
         count
     }
-    
+
     // Filtrar movimientos por filtros y ordenar cronológicamente (más nuevos primero)
     val movimientosFiltrados = remember(movimientos.toList(), filters) {
         val filtrados = filterMovimientos(movimientos.toList(), filters)
@@ -114,14 +113,14 @@ fun EntradaProductosScreen(
         }
         result
     }
-    
+
     // Estado de paginación
     val paginationState = rememberPaginationState(
         items = movimientosFiltrados,
         itemsPerPage = 6,
         currentPage = currentPage
     )
-    
+
     // Ajustar página actual si es mayor al total de páginas
     LaunchedEffect(paginationState.totalPages) {
         if (currentPage > paginationState.totalPages) {
@@ -159,7 +158,7 @@ fun EntradaProductosScreen(
                     fontWeight = FontWeight.Bold,
                     color = TextPrimaryColor
                 )
-                
+
                 Button(
                     onClick = { showRegistroForm = true },
                     colors = ButtonDefaults.buttonColors(containerColor = REntrada),
@@ -168,7 +167,7 @@ fun EntradaProductosScreen(
                     Text("📦 Registrar", color = Color.White, fontWeight = FontWeight.Medium)
                 }
             }
-            
+
             // Barra de búsqueda y botón de filtros
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -176,7 +175,7 @@ fun EntradaProductosScreen(
             ) {
                 OutlinedTextField(
                     value = filters.searchText,
-                    onValueChange = { 
+                    onValueChange = {
                         filters = filters.copy(searchText = it)
                         currentPage = 1
                     },
@@ -189,7 +188,7 @@ fun EntradaProductosScreen(
                     shape = RoundedCornerShape(12.dp),
                     trailingIcon = {
                         if (filters.searchText.isNotEmpty()) {
-                            IconButton(onClick = { 
+                            IconButton(onClick = {
                                 filters = filters.copy(searchText = "")
                                 currentPage = 1
                             }) {
@@ -198,16 +197,16 @@ fun EntradaProductosScreen(
                         }
                     }
                 )
-                
+
                 FilterButton(
                     onClick = { showFiltersModal = true },
                     activeFiltersCount = activeFiltersCount,
                     accentColor = REntrada
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Grid de movimientos dinámico
             if (paginationState.itemsInCurrentPage.isEmpty() && movimientos.isEmpty()) {
                 MovimientoEmptyState(
@@ -248,7 +247,7 @@ fun EntradaProductosScreen(
                     }
                 }
             }
-            
+
             // Paginación
             PaginationControls(
                 currentPage = currentPage,
@@ -256,14 +255,13 @@ fun EntradaProductosScreen(
                 onPageChange = { currentPage = it }
             )
         }
-        
+
         // Modal de formulario de registro
         if (showRegistroForm) {
             RegistroEntradaModal(
                 onDismiss = { showRegistroForm = false },
-                onRegistrar = { 
+                onRegistrar = {
                     showRegistroForm = false
-                    showRegistroDialog = true
                     // Recargar movimientos después de registrar
                     movimientoViewModel.cargarMovimientosPorTipo(TipoMovimiento.ENTRADA)
                 },
@@ -271,7 +269,7 @@ fun EntradaProductosScreen(
                 empleado = empleado
             )
         }
-        
+
         // Modal de filtros
         if (showFiltersModal) {
             MovimientoFiltersModal(
@@ -287,60 +285,15 @@ fun EntradaProductosScreen(
                 accentColor = REntrada
             )
         }
-        
+
         // Modal de detalle del movimiento
         if (showDetailModal && selectedMovimiento != null) {
             MovimientoDetailModal(
                 movimiento = selectedMovimiento!!,
-                onDismiss = { 
+                onDismiss = {
                     showDetailModal = false
                     selectedMovimiento = null
                 }
-            )
-        }
-        
-        // Diálogo de confirmación de registro exitoso
-        if (showRegistroDialog) {
-            AlertDialog(
-                onDismissRequest = { showRegistroDialog = false },
-                title = {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(80.dp)
-                                .background(REntrada, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("✓", fontSize = 40.sp, color = Color.White, fontWeight = FontWeight.Bold)
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            "¡Se registró exitosamente!",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimaryColor
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "Se han registrado xx unidades del (Nombre del Autoparte) en Inventario",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextSecondaryColor
-                        )
-                    }
-                },
-                confirmButton = {
-                    Button(
-                        onClick = { showRegistroDialog = false },
-                        colors = ButtonDefaults.buttonColors(containerColor = RedMarimon),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Salir", color = Color.White)
-                    }
-                },
-                containerColor = Color.White
             )
         }
     }
@@ -373,9 +326,9 @@ private fun ProductoEntradaCard(
                 modifier = Modifier.size(60.dp),
                 fallbackEmoji = "📦"
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             // Código del producto
             Text(
                 producto.codigo,
@@ -383,7 +336,7 @@ private fun ProductoEntradaCard(
                 color = TextSecondaryColor,
                 fontWeight = FontWeight.Medium
             )
-            
+
             // Precio
             Text(
                 "S/ ${producto.precio}",
@@ -391,7 +344,7 @@ private fun ProductoEntradaCard(
                 color = TextPrimaryColor,
                 fontWeight = FontWeight.Bold
             )
-            
+
             // Nombre del producto
             Text(
                 producto.nombre,
@@ -400,9 +353,9 @@ private fun ProductoEntradaCard(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
-            
+
             Spacer(modifier = Modifier.weight(1f))
-            
+
             // Stock
             Text(
                 "Stock: ${producto.cantidad}",
