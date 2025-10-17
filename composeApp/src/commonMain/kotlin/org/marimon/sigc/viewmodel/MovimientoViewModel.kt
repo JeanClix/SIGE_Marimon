@@ -11,8 +11,11 @@ import io.ktor.http.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.marimon.sigc.config.SupabaseClient
 import org.marimon.sigc.config.SupabaseConfig
 import org.marimon.sigc.model.Movimiento
@@ -113,33 +116,65 @@ class MovimientoViewModel : ViewModel() {
 
                 if (response.status.isSuccess()) {
                     val responseBody = response.bodyAsText()
+                    println("🔍 [MovimientoVM] Response body: ${responseBody.take(200)}")
                     val movimientosJson = Json.parseToJsonElement(responseBody).jsonArray
                     _movimientos.clear()
+                    
+                    // Recopilar todos los IDs únicos
+                    val productosIds = mutableSetOf<Int>()
+                    val empleadosIds = mutableSetOf<Int>()
+                    val movimientosData = mutableListOf<Pair<JsonObject, Pair<Int, Int>>>()
 
                     for (row in movimientosJson) {
                         val obj = row.jsonObject
-                        val producto = obj["Producto"]?.jsonObject
-                        val empleado = obj["Empleado"]?.jsonObject
+                        val productoId = obj["producto_id"]!!.jsonPrimitive.int
+                        val empleadoId = obj["empleado_id"]!!.jsonPrimitive.int
                         
-                        _movimientos.add(
-                            Movimiento(
-                                id = obj["id"]!!.toString().toInt(),
-                                tipo = if (obj["tipo"]!!.toString().replace("\"", "") == "ENTRADA") TipoMovimiento.ENTRADA else TipoMovimiento.SALIDA,
-                                productoId = obj["producto_id"]!!.toString().toInt(),
-                                empleadoId = obj["empleado_id"]!!.toString().toInt(),
-                                cantidad = obj["cantidad"]!!.toString().toInt(),
-                                nota = obj["nota"]?.toString()?.replace("\"", "")?.trim(),
-                                fechaRegistro = obj["fecha_registro"]!!.toString().replace("\"", ""),
-                                createdAt = obj["created_at"]!!.toString().replace("\"", ""),
-                                updatedAt = obj["updated_at"]!!.toString().replace("\"", ""),
-                                activo = obj["activo"]!!.toString().toBoolean(),
-                                productoNombre = producto?.get("nombre")?.toString()?.replace("\"", ""),
-                                productoCodigo = producto?.get("codigo")?.toString()?.replace("\"", ""),
-                                productoImagenUrl = producto?.get("imagen_url")?.toString()?.replace("\"", ""),
-                                empleadoNombre = empleado?.get("nombre")?.toString()?.replace("\"", "")
-                            )
-                        )
+                        productosIds.add(productoId)
+                        empleadosIds.add(empleadoId)
+                        movimientosData.add(obj to (productoId to empleadoId))
                     }
+                    
+                    println("🔍 [MovimientoVM] Cargando info de ${productosIds.size} productos: $productosIds")
+                    
+                    // Buscar información de productos
+                    val productosInfo = buscarInfoProductos(productosIds.toList())
+                    println("🔍 [MovimientoVM] Productos encontrados: ${productosInfo.size}")
+                    productosInfo.forEach { (id, info) ->
+                        println("🔍 [MovimientoVM] Producto $id: ${info.first}")
+                    }
+                    
+                    // Buscar información de empleados
+                    val empleadosInfo = buscarInfoEmpleados(empleadosIds.toList())
+                    println("🔍 [MovimientoVM] Empleados encontrados: ${empleadosInfo.size}")
+                    
+                    // Crear movimientos con la información obtenida
+                    for ((obj, ids) in movimientosData) {
+                        val (productoId, empleadoId) = ids
+                        val productoData = productosInfo[productoId]
+                        val empleadoData = empleadosInfo[empleadoId]
+                        
+                        val movimiento = Movimiento(
+                            id = obj["id"]!!.jsonPrimitive.int,
+                            tipo = if (obj["tipo"]!!.jsonPrimitive.content == "ENTRADA") TipoMovimiento.ENTRADA else TipoMovimiento.SALIDA,
+                            productoId = productoId,
+                            empleadoId = empleadoId,
+                            cantidad = obj["cantidad"]!!.jsonPrimitive.int,
+                            nota = obj["nota"]?.jsonPrimitive?.content?.trim(),
+                            fechaRegistro = obj["fecha_registro"]!!.jsonPrimitive.content,
+                            createdAt = obj["created_at"]!!.jsonPrimitive.content,
+                            updatedAt = obj["updated_at"]!!.jsonPrimitive.content,
+                            activo = obj["activo"]!!.jsonPrimitive.boolean,
+                            productoNombre = productoData?.first ?: "Producto ID: $productoId",
+                            productoCodigo = productoData?.second,
+                            productoImagenUrl = productoData?.third,
+                            empleadoNombre = empleadoData ?: "Empleado ID: $empleadoId"
+                        )
+                        
+                        println("🔍 [MovimientoVM] Movimiento creado: ID=${movimiento.id}, Producto=${movimiento.productoNombre}")
+                        _movimientos.add(movimiento)
+                    }
+                    
                     _error.value = null
                 } else {
                     // Intentar consulta simplificada sin JOIN
@@ -162,34 +197,53 @@ class MovimientoViewModel : ViewModel() {
                         
                         for (row in movimientosJsonSimple) {
                             val obj = row.jsonObject
-                            val productoId = obj["producto_id"]!!.toString().toInt()
-                            val empleadoId = obj["empleado_id"]!!.toString().toInt()
+                            val productoId = obj["producto_id"]!!.jsonPrimitive.int
+                            val empleadoId = obj["empleado_id"]!!.jsonPrimitive.int
+                            
+                            println("DEBUG: Movimiento parseado - ProductoID: $productoId, EmpleadoID: $empleadoId")
                             
                             productosIds.add(productoId)
                             empleadosIds.add(empleadoId)
                             movimientosData.add(obj to (productoId to empleadoId))
                         }
                         
+                        println("DEBUG: ProductosIDs a buscar: $productosIds")
+                        
                         // Buscar información de todos los productos y empleados de una vez
                         // Como las tablas productos y empleados dan 404, usar datos de la nota
                         val productosInfo = mutableMapOf<Int, Triple<String, String?, String?>>()
                         val empleadosInfo = mutableMapOf<Int, String>()
                         
-                        // Extraer información de las notas y usar consultas directas para obtener información de productos y empleados
+                        // Extraer información de las notas como fallback
                         for ((obj, ids) in movimientosData) {
-                            val nota = obj["nota"]?.toString()?.replace("\"", "") ?: ""
+                            val nota = obj["nota"]?.jsonPrimitive?.content ?: ""
                             val (productoId, empleadoId) = ids
                             
+                            println("DEBUG: Procesando movimiento - ProductoID: $productoId, Nota: '$nota'")
+                            
                             // Extraer nombre del producto de la nota si está disponible
-                            if (nota.contains("Producto:")) {
-                                val productoNombre = nota.substringAfter("Producto: ").substringBefore(" - Empleado:")
+                            // Formato: "Entrada/Salida registrada - Producto: NOMBRE - Empleado: EMPLEADO"
+                            if (nota.contains("Producto:") && nota.contains(" - Empleado:")) {
+                                val productoNombre = nota
+                                    .substringAfter("Producto: ")
+                                    .substringBefore(" - Empleado:")
+                                    .trim()
                                 if (productoNombre.isNotBlank()) {
-                                    productosInfo[productoId] = Triple(productoNombre, "COD-$productoId", null)
+                                    productosInfo[productoId] = Triple(productoNombre, null, null)
+                                    println("DEBUG: Producto extraído de nota - ID: $productoId, Nombre: $productoNombre")
                                 }
-                            } else if (nota.contains("Categoría:")) {
-                                // Para notas con formato de categoría, intentar extraer de otra manera
-                                val categoria = nota.substringAfter("Categoría: ").substringBefore(" - Empleado:")
-                                productosInfo[productoId] = Triple("Producto de $categoria", "COD-$productoId", null)
+                            } else if (nota.contains("Categoría:") && nota.contains(" - Empleado:")) {
+                                // Formato alternativo con categoría
+                                val categoria = nota
+                                    .substringAfter("Categoría: ")
+                                    .substringBefore(" - Empleado:")
+                                    .trim()
+                                if (categoria.isNotBlank()) {
+                                    productosInfo[productoId] = Triple("Producto de $categoria", null, null)
+                                    println("DEBUG: Categoría extraída de nota - ID: $productoId, Categoría: $categoria")
+                                }
+                            } else {
+                                println("DEBUG: Nota no tiene formato esperado - ProductoID: $productoId")
                             }
                             
                             // Extraer nombre del empleado de la nota si está disponible
@@ -201,11 +255,22 @@ class MovimientoViewModel : ViewModel() {
                             }
                         }
                         
-                        // Intentar obtener información adicional de productos directamente
+                        // Obtener información de productos directamente desde la base de datos
+                        // Esto sobrescribe cualquier información extraída de las notas con datos reales
+                        println("DEBUG: Buscando info de productos: $productosIds")
                         val productosInfoAdicional = buscarInfoProductos(productosIds.toList())
+                        println("DEBUG: Productos encontrados en BD: ${productosInfoAdicional.size}")
                         productosInfoAdicional.forEach { (id, info) ->
+                            println("DEBUG: Producto ID $id -> ${info.first}")
+                            // SIEMPRE usar la información de la base de datos cuando esté disponible
+                            // Esto sobrescribe cualquier fallback de las notas
+                            productosInfo[id] = info
+                        }
+                        
+                        // Verificar si hay productos sin información
+                        productosIds.forEach { id ->
                             if (!productosInfo.containsKey(id)) {
-                                productosInfo[id] = info
+                                println("DEBUG: Producto ID $id no tiene información disponible")
                             }
                         }
                         
@@ -223,20 +288,27 @@ class MovimientoViewModel : ViewModel() {
                             val productoInfo = productosInfo[productoId]
                             val empleadoInfo = empleadosInfo[empleadoId]
                             
+                            // Si no hay información del producto, al menos mostrar el ID
+                            val productoNombre = productoInfo?.first ?: "Producto ID: $productoId"
+                            val productoCodigo = productoInfo?.second
+                            val productoImagenUrl = productoInfo?.third
+                            
+                            println("DEBUG: Creando movimiento - ProductoID: $productoId, Nombre: $productoNombre")
+                            
                             val movimiento = Movimiento(
-                                id = obj["id"]!!.toString().toInt(),
-                                tipo = if (obj["tipo"]!!.toString().replace("\"", "") == "ENTRADA") TipoMovimiento.ENTRADA else TipoMovimiento.SALIDA,
+                                id = obj["id"]!!.jsonPrimitive.int,
+                                tipo = if (obj["tipo"]!!.jsonPrimitive.content == "ENTRADA") TipoMovimiento.ENTRADA else TipoMovimiento.SALIDA,
                                 productoId = productoId,
                                 empleadoId = empleadoId,
-                                cantidad = obj["cantidad"]!!.toString().toInt(),
-                                nota = obj["nota"]?.toString()?.replace("\"", "")?.trim(),
-                                fechaRegistro = obj["fecha_registro"]!!.toString().replace("\"", ""),
-                                createdAt = obj["created_at"]!!.toString().replace("\"", ""),
-                                updatedAt = obj["updated_at"]!!.toString().replace("\"", ""),
-                                activo = obj["activo"]!!.toString().toBoolean(),
-                                productoNombre = productoInfo?.first ?: "Producto ID: $productoId",
-                                productoCodigo = productoInfo?.second ?: "COD-$productoId",
-                                productoImagenUrl = productoInfo?.third,
+                                cantidad = obj["cantidad"]!!.jsonPrimitive.int,
+                                nota = obj["nota"]?.jsonPrimitive?.content?.trim(),
+                                fechaRegistro = obj["fecha_registro"]!!.jsonPrimitive.content,
+                                createdAt = obj["created_at"]!!.jsonPrimitive.content,
+                                updatedAt = obj["updated_at"]!!.jsonPrimitive.content,
+                                activo = obj["activo"]!!.jsonPrimitive.boolean,
+                                productoNombre = productoNombre,
+                                productoCodigo = productoCodigo,
+                                productoImagenUrl = productoImagenUrl,
                                 empleadoNombre = empleadoInfo ?: "Empleado ID: $empleadoId"
                             )
                             
@@ -496,10 +568,10 @@ class MovimientoViewModel : ViewModel() {
     
     // Función auxiliar para buscar información de múltiples productos
     private suspend fun buscarInfoProductos(productosIds: List<Int>): Map<Int, Triple<String, String?, String?>> {
-    return try {
-        if (productosIds.isEmpty()) return emptyMap()
-        val idsStr = productosIds.joinToString(",")
-        val url = "${SupabaseConfig.SUPABASE_URL}/rest/v1/productos?id=in.($idsStr)"
+        return try {
+            if (productosIds.isEmpty()) return emptyMap()
+            val idsStr = productosIds.joinToString(",")
+            val url = "${SupabaseConfig.SUPABASE_URL}/rest/v1/productos?id=in.($idsStr)&select=*"
             val headers = mapOf(
                 "apikey" to SupabaseConfig.SUPABASE_ANON_KEY,
                 "Authorization" to "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}"
@@ -511,23 +583,27 @@ class MovimientoViewModel : ViewModel() {
             
             if (response.status.isSuccess()) {
                 val responseBody = response.bodyAsText()
+                println("DEBUG: Response body para productos: $responseBody") // Debug
                 val productosJson = Json.parseToJsonElement(responseBody).jsonArray
                 val result = mutableMapOf<Int, Triple<String, String?, String?>>()
                 
                 for (productoJson in productosJson) {
                     val producto = productoJson.jsonObject
-                    val id = producto["id"]!!.toString().toInt()
-                    result[id] = Triple(
-                        producto["nombre"]?.toString()?.replace("\"", "") ?: "Producto Desconocido",
-                        producto["codigo"]?.toString()?.replace("\"", ""),
-                        producto["imagen_url"]?.toString()?.replace("\"", "")
-                    )
+                    val id = producto["id"]?.jsonPrimitive?.int ?: continue
+                    val nombre = producto["nombre"]?.jsonPrimitive?.content ?: "Producto Desconocido"
+                    val codigo = producto["codigo"]?.jsonPrimitive?.content
+                    val imagenUrl = producto["imagen_url"]?.jsonPrimitive?.content
+                    
+                    result[id] = Triple(nombre, codigo, imagenUrl)
+                    println("DEBUG: Producto cargado - ID: $id, Nombre: $nombre") // Debug
                 }
                 result
             } else {
+                println("DEBUG: Error al cargar productos - Status: ${response.status}") // Debug
                 emptyMap()
             }
         } catch (e: Exception) {
+            println("DEBUG: Excepción al cargar productos: ${e.message}") // Debug
             emptyMap()
         }
     }

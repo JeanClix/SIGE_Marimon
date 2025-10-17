@@ -75,7 +75,7 @@ fun RegistroEntradaModal(
             productoId = selectedProduct!!.id,
             empleadoId = empleado.id, // Usar el ID del empleado logueado
             cantidad = cantidad.toInt(),
-            nota = "Entrada registrada - Categoría: $categoria - Empleado: ${empleado.nombre}"
+            nota = "Entrada registrada - Producto: ${selectedProduct!!.nombre} - Empleado: ${empleado.nombre}"
         )
         
         // Registrar en el ViewModel con callbacks
