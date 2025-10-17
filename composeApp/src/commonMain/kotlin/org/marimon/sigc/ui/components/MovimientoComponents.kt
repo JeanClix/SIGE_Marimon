@@ -59,6 +59,7 @@ data class MovimientoTheme(
 @Composable
 fun MovimientoCard(
     movimiento: Movimiento,
+    onClick: (() -> Unit)? = null,
     theme: MovimientoTheme = when (movimiento.tipo) {
         TipoMovimiento.ENTRADA -> MovimientoTheme(
             color = Color(0xFF4CAF50),
@@ -81,7 +82,8 @@ fun MovimientoCard(
             .border(2.dp, borderColor, RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = CardBackgroundColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        onClick = { onClick?.invoke() }
     ) {
         Column(
             modifier = Modifier
@@ -135,6 +137,290 @@ fun MovimientoCard(
                 fontWeight = FontWeight.Medium
             )
         }
+    }
+}
+
+/**
+ * Modal para mostrar el detalle completo de un movimiento
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MovimientoDetailModal(
+    movimiento: Movimiento,
+    onDismiss: () -> Unit
+) {
+    val theme = when (movimiento.tipo) {
+        TipoMovimiento.ENTRADA -> MovimientoTheme(
+            color = Color(0xFF4CAF50),
+            emoji = "📦",
+            signo = "+"
+        )
+        TipoMovimiento.SALIDA -> MovimientoTheme(
+            color = Color(0xFFFF383C),
+            emoji = "📤",
+            signo = "-"
+        )
+    }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(theme.emoji, fontSize = 24.sp)
+                    Text(
+                        when (movimiento.tipo) {
+                            TipoMovimiento.ENTRADA -> "Detalle de Entrada"
+                            TipoMovimiento.SALIDA -> "Detalle de Salida"
+                        },
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                IconButton(onClick = onDismiss) {
+                    Text("✕", fontSize = 20.sp, color = TextSecondaryColor)
+                }
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Imagen del producto (centrada y más grande)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ProductImage(
+                        imageUrl = movimiento.productoImagenUrl,
+                        productName = movimiento.productoNombre ?: "Producto",
+                        modifier = Modifier.size(100.dp),
+                        fallbackEmoji = theme.emoji
+                    )
+                }
+                
+                // Información del producto
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFF5F5F5)
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // ID del movimiento
+                        DetailRow(
+                            label = "ID Movimiento",
+                            value = "#${movimiento.id}",
+                            icon = "🔖"
+                        )
+                        
+                        Divider(color = Color(0xFFE0E0E0))
+                        
+                        // Código del producto
+                        DetailRow(
+                            label = "Código",
+                            value = movimiento.productoCodigo ?: "N/A",
+                            icon = "📋"
+                        )
+                        
+                        // Nombre del producto
+                        DetailRow(
+                            label = "Producto",
+                            value = movimiento.productoNombre ?: "Producto desconocido",
+                            icon = "📦"
+                        )
+                        
+                        Divider(color = Color(0xFFE0E0E0))
+                        
+                        // Cantidad
+                        DetailRow(
+                            label = "Cantidad",
+                            value = "${theme.signo}${movimiento.cantidad} unidades",
+                            valueColor = theme.color,
+                            icon = "📊",
+                            bold = true
+                        )
+                        
+                        // Tipo
+                        DetailRow(
+                            label = "Tipo",
+                            value = when (movimiento.tipo) {
+                                TipoMovimiento.ENTRADA -> "Entrada de inventario"
+                                TipoMovimiento.SALIDA -> "Salida de inventario"
+                            },
+                            valueColor = theme.color,
+                            icon = theme.emoji
+                        )
+                        
+                        Divider(color = Color(0xFFE0E0E0))
+                        
+                        // Empleado
+                        if (movimiento.empleadoNombre != null) {
+                            DetailRow(
+                                label = "Registrado por",
+                                value = movimiento.empleadoNombre,
+                                icon = "👤"
+                            )
+                        }
+                        
+                        // Fecha de registro
+                        DetailRow(
+                            label = "Fecha de registro",
+                            value = formatFechaDetallada(movimiento.fechaRegistro),
+                            icon = "📅"
+                        )
+                        
+                        // Nota (si existe)
+                        if (!movimiento.nota.isNullOrBlank()) {
+                            Divider(color = Color(0xFFE0E0E0))
+                            
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("📝", fontSize = 16.sp)
+                                    Text(
+                                        "Nota",
+                                        fontSize = 12.sp,
+                                        color = TextSecondaryColor,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                                Text(
+                                    movimiento.nota,
+                                    fontSize = 14.sp,
+                                    color = TextPrimaryColor,
+                                    modifier = Modifier.padding(start = 24.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                // Estado
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                if (movimiento.activo) Color(0xFF4CAF50) else Color(0xFFFF5252),
+                                RoundedCornerShape(20.dp)
+                            )
+                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            if (movimiento.activo) "✓ Activo" else "✕ Inactivo",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = theme.color),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Cerrar", color = Color.White)
+            }
+        },
+        dismissButton = {},
+        containerColor = Color.White,
+        shape = RoundedCornerShape(16.dp)
+    )
+}
+
+/**
+ * Componente auxiliar para mostrar filas de detalle
+ */
+@Composable
+private fun DetailRow(
+    label: String,
+    value: String,
+    icon: String = "",
+    valueColor: Color = TextPrimaryColor,
+    bold: Boolean = false
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (icon.isNotEmpty()) {
+                Text(icon, fontSize = 16.sp)
+            }
+            Text(
+                label,
+                fontSize = 12.sp,
+                color = TextSecondaryColor,
+                fontWeight = FontWeight.Medium
+            )
+        }
+        Text(
+            value,
+            fontSize = 14.sp,
+            color = valueColor,
+            fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
+            modifier = Modifier.padding(start = if (icon.isNotEmpty()) 24.dp else 0.dp)
+        )
+    }
+}
+
+/**
+ * Función para formatear fecha con más detalle
+ */
+private fun formatFechaDetallada(fechaISO: String): String {
+    return try {
+        val partes = fechaISO.split("T")
+        if (partes.size >= 2) {
+            val fecha = partes[0]
+            val hora = partes[1].substring(0, 8) // HH:MM:SS
+            
+            // Formato: DD/MM/YYYY a las HH:MM:SS
+            val fechaPartes = fecha.split("-")
+            if (fechaPartes.size == 3) {
+                val (year, month, day) = fechaPartes
+                "$day/$month/$year a las $hora"
+            } else {
+                "$fecha $hora"
+            }
+        } else {
+            fechaISO
+        }
+    } catch (e: Exception) {
+        fechaISO
     }
 }
 

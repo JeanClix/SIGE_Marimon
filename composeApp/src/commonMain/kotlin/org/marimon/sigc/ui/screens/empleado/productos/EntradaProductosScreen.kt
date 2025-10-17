@@ -24,10 +24,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.marimon.sigc.model.Empleado
+import org.marimon.sigc.model.Movimiento
 import org.marimon.sigc.model.Producto
 import org.marimon.sigc.ui.components.EmpleadoTopBar
 import org.marimon.sigc.ui.components.ProductImage
 import org.marimon.sigc.ui.components.MovimientoCard
+import org.marimon.sigc.ui.components.MovimientoDetailModal
 import org.marimon.sigc.ui.components.MovimientoEmptyState
 import org.marimon.sigc.ui.components.PaginationControls
 import org.marimon.sigc.ui.components.rememberPaginationState
@@ -61,6 +63,8 @@ fun EntradaProductosScreen(
     var showRegistroDialog by remember { mutableStateOf(false) }
     var showRegistroForm by remember { mutableStateOf(false) }
     var showFiltersModal by remember { mutableStateOf(false) }
+    var showDetailModal by remember { mutableStateOf(false) }
+    var selectedMovimiento by remember { mutableStateOf<Movimiento?>(null) }
     var currentPage by remember { mutableIntStateOf(1) }
     
     // ViewModels
@@ -234,7 +238,13 @@ fun EntradaProductosScreen(
                     modifier = Modifier.weight(1f)
                 ) {
                     items(paginationState.itemsInCurrentPage) { movimiento ->
-                        MovimientoCard(movimiento = movimiento)
+                        MovimientoCard(
+                            movimiento = movimiento,
+                            onClick = {
+                                selectedMovimiento = movimiento
+                                showDetailModal = true
+                            }
+                        )
                     }
                 }
             }
@@ -275,6 +285,17 @@ fun EntradaProductosScreen(
                 availableCategories = availableCategories,
                 showTipoFilter = false,
                 accentColor = REntrada
+            )
+        }
+        
+        // Modal de detalle del movimiento
+        if (showDetailModal && selectedMovimiento != null) {
+            MovimientoDetailModal(
+                movimiento = selectedMovimiento!!,
+                onDismiss = { 
+                    showDetailModal = false
+                    selectedMovimiento = null
+                }
             )
         }
         
