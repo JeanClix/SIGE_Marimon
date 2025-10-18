@@ -14,7 +14,9 @@ data class Producto(
     val imagenUrl: String? = null,
     val activo: Boolean = true,
     val fechaCreacion: String? = null,
-    val fechaActualizacion: String? = null
+    val fechaActualizacion: String? = null,
+    val categoriaId: Int? = null,
+    val categoriaNombre: String? = null
 )
 
 // DTO para crear producto
@@ -27,5 +29,6 @@ data class ProductoCreate(
     val precio: Double,
     val cantidad: Int,
     val imagenUrl: String? = null,
-    val activo: Boolean = true
+    val activo: Boolean = true,
+    val categoriaId: Int? = null
 )

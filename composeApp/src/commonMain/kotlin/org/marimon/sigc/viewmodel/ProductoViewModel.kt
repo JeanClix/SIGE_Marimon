@@ -173,4 +173,80 @@ class ProductoViewModel : ViewModel() {
             }
         }
     }
+
+    /**
+     * Actualiza el stock de un producto sumando una cantidad adicional
+     * Usado cuando se registra una entrada de inventario
+     */
+    fun actualizarStockProducto(
+        productoId: Int,
+        cantidadAdicional: Int,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                // 1. Obtener el producto actual para conocer su stock
+                val getUrl = "${SupabaseConfig.SUPABASE_URL}/rest/v1/productos?id=eq.$productoId&select=cantidad"
+                val headers = mapOf(
+                    "apikey" to SupabaseConfig.SUPABASE_ANON_KEY,
+                    "Authorization" to "Bearer ${SupabaseConfig.SUPABASE_ANON_KEY}"
+                )
+
+                val getResponse: HttpResponse = SupabaseClient.httpClient.get(getUrl) {
+                    headers.forEach { (k, v) -> header(k, v) }
+                }
+
+                if (getResponse.status.isSuccess()) {
+                    val productosJson = Json.parseToJsonElement(getResponse.bodyAsText()).jsonArray
+
+                    if (productosJson.isNotEmpty()) {
+                        val productoObj = productosJson[0].jsonObject
+                        val cantidadActual = productoObj["cantidad"]!!.toString().toInt()
+                        val nuevaCantidad = cantidadActual + cantidadAdicional
+
+                        println("📦 Actualizando stock - Producto ID: $productoId, Stock actual: $cantidadActual, Adicional: +$cantidadAdicional, Nuevo stock: $nuevaCantidad")
+
+                        // 2. Actualizar la cantidad del producto
+                        val updateUrl = "${SupabaseConfig.SUPABASE_URL}/rest/v1/productos?id=eq.$productoId"
+                        val updateHeaders = headers + ("Content-Type" to "application/json")
+
+                        val updateBody = """
+                            {
+                                "cantidad": $nuevaCantidad
+                            }
+                        """.trimIndent()
+
+                        val updateResponse: HttpResponse = SupabaseClient.httpClient.patch(updateUrl) {
+                            updateHeaders.forEach { (k, v) -> header(k, v) }
+                            setBody(updateBody)
+                        }
+
+                        if (updateResponse.status.isSuccess()) {
+                            println("✅ Stock actualizado exitosamente: $cantidadActual -> $nuevaCantidad")
+                            onSuccess()
+                            // Recargar productos para actualizar la lista
+                            cargarProductos()
+                        } else {
+                            val errorMsg = "Error al actualizar stock: ${updateResponse.status}"
+                            println("❌ $errorMsg")
+                            onError(errorMsg)
+                        }
+                    } else {
+                        val errorMsg = "Producto no encontrado"
+                        println("❌ $errorMsg")
+                        onError(errorMsg)
+                    }
+                } else {
+                    val errorMsg = "Error al obtener producto: ${getResponse.status}"
+                    println("❌ $errorMsg")
+                    onError(errorMsg)
+                }
+            } catch (e: Exception) {
+                val errorMsg = "Error: ${e.message}"
+                println("❌ $errorMsg")
+                onError(errorMsg)
+            }
+        }
+    }
 }

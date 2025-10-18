@@ -1,0 +1,19 @@
+# Configuración de Email SMTP - EJEMPLO
+# Copia este archivo como email_config.properties y configura tus credenciales
+
+# Configuración SMTP para Gmail
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+FROM_EMAIL=ejemplo@gmail.com
+FROM_PASSWORD=tu-app-password-aqui
+
+# Instrucciones para configurar:
+# 1. Copiar este archivo como email_config.properties
+# 2. Cambiar FROM_EMAIL por tu email de Gmail
+# 3. Activar 2FA en tu cuenta de Gmail
+# 4. Generar App Password:
+#    - Ir a Google Account → Security → 2-Step Verification
+#    - App passwords → Generate password
+#    - Usar esa contraseña en FROM_PASSWORD
+# 5. Guardar el archivo email_config.properties
+# 6. NO SUBIR email_config.properties al repositorio
