@@ -14,11 +14,17 @@ import org.marimon.sigc.ui.screens.empleado.EySAutopartesScreen
 import org.marimon.sigc.ui.screens.empleado.productos.EntradaProductosScreen
 import org.marimon.sigc.ui.screens.empleado.productos.SalidaProductosScreen
 import org.marimon.sigc.ui.screens.empleado.TransaccionScreen
+import org.marimon.sigc.services.PDFService
+import org.marimon.sigc.services.PDFServiceManager
 import org.marimon.sigc.viewmodel.AuthViewModel
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Inicializar el servicio de PDF
+        PDFServiceManager.initialize(PDFService(this))
+        
         setContent {
             MaterialTheme {
                 val authViewModel = remember { AuthViewModel() }
@@ -145,8 +151,7 @@ class LoginActivity : ComponentActivity() {
                                     onSuccess = { message ->
                                         println("DEBUG: Transacción exitosa: $message")
                                         // Aquí se podría mostrar un diálogo de éxito o navegar de vuelta
-                                    },
-                                    context = this@LoginActivity
+                                    }
                                 )
                             }
                         }

@@ -3,9 +3,21 @@ package org.marimon.sigc.services
 import android.content.Context
 import android.os.Environment
 import android.util.Log
+import com.itextpdf.kernel.pdf.PdfDocument
+import com.itextpdf.kernel.pdf.PdfWriter
+import com.itextpdf.layout.Document
+import com.itextpdf.layout.element.Paragraph
+import com.itextpdf.layout.element.Table
+import com.itextpdf.layout.element.Cell
+import com.itextpdf.layout.property.TextAlignment
+import com.itextpdf.layout.property.HorizontalAlignment
+import com.itextpdf.kernel.colors.ColorConstants
+import com.itextpdf.layout.element.Div
+import com.itextpdf.kernel.font.PdfFontFactory
+import com.itextpdf.kernel.font.PdfFont
 import org.marimon.sigc.model.Transaccion
 import java.io.File
-import java.io.FileWriter
+import java.io.FileOutputStream
 import java.io.IOException
 
 object PDFGeneratorReal {

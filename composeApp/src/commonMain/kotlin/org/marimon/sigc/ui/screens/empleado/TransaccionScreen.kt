@@ -17,9 +17,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 import org.marimon.sigc.model.Empleado
+import org.marimon.sigc.services.PDFServiceManager
 import org.marimon.sigc.model.Producto
 import org.marimon.sigc.model.Transaccion
 import org.marimon.sigc.model.TransaccionCreate
@@ -45,13 +46,13 @@ private val InputBorder = Color(0xFFE5E5E5)
 fun TransaccionScreen(
     empleado: Empleado,
     onNavigateBack: () -> Unit,
-    onSuccess: (String) -> Unit = {},
-    context: Any? = null // Contexto para Android
+    onSuccess: (String) -> Unit = {}
 ) {
     val transaccionViewModel = remember { TransaccionViewModel() }
     val productos = transaccionViewModel.productos
     val isLoading = transaccionViewModel.isLoading
     val error = transaccionViewModel.error
+    val coroutineScope = rememberCoroutineScope()
     
     // Estados del formulario
     var dniRuc by remember { mutableStateOf("") }
@@ -444,37 +445,24 @@ fun TransaccionScreen(
                                                     empleadoNombre = empleado.nombre
                                                 )
 
-                                                // Usar PDFDownloader para descarga y email automáticos
-                                                if (context != null) {
-                                                    // Llamar a la función de Android específica
-                                                    try {
-                                                        val pdfDownloaderClass = Class.forName("org.marimon.sigc.services.PDFDownloader")
-                                                        val downloadMethod = pdfDownloaderClass.getMethod("downloadPDFWithEmail", 
-                                                            android.content.Context::class.java,
-                                                            org.marimon.sigc.model.Transaccion::class.java,
-                                                            kotlin.jvm.functions.Function0::class.java,
-                                                            kotlin.jvm.functions.Function1::class.java
-                                                        )
-                                                        
-                                                        downloadMethod.invoke(null, context, transaccionCompleta,
-                                                            { // onSuccess
-                                                                transaccionGenerada = "Transacción registrada, PDF descargado y email enviado exitosamente"
-                                                                showSuccessDialog = true
-                                                            },
-                                                            { error: String -> // onError
-                                                                transaccionGenerada = "Transacción registrada pero error: $error"
-                                                                showSuccessDialog = true
-                                                            }
-                                                        )
-                                                    } catch (e: Exception) {
-                                                        println("ERROR: No se pudo usar PDFDownloader: ${e.message}")
-                                                        transaccionGenerada = "Transacción registrada pero error en PDF/Email: ${e.message}"
+                                                // Usar PDFServiceManager para descarga y email automáticos
+                                                coroutineScope.launch {
+                                                    val success = PDFServiceManager.downloadPDFWithEmail(
+                                                        transaccion = transaccionCompleta,
+                                                        onSuccess = {
+                                                            transaccionGenerada = "Transacción registrada, PDF descargado y email enviado exitosamente"
+                                                            showSuccessDialog = true
+                                                        },
+                                                        onError = { error ->
+                                                            transaccionGenerada = "Transacción registrada pero error: $error"
+                                                            showSuccessDialog = true
+                                                        }
+                                                    )
+                                                    
+                                                    if (!success) {
+                                                        transaccionGenerada = "Transacción registrada pero error en PDF/Email"
                                                         showSuccessDialog = true
                                                     }
-                                                } else {
-                                                    // Fallback si no hay contexto
-                                                    transaccionGenerada = "Transacción registrada exitosamente"
-                                                    showSuccessDialog = true
                                                 }
                                             },
                                             onError = { error ->
@@ -575,28 +563,14 @@ fun TransaccionScreen(
                             val pdfContent = transaccionViewModel.generarPDF(transaccionCompleta)
                             val fileName = "${transaccionCompleta.tipoComprobante.valor}_${String.format("%08d", transaccionCompleta.id)}_${transaccionCompleta.dniRuc}"
                             
-                            // Descargar PDF automáticamente usando corrutina
-                            if (context != null) {
-                                kotlinx.coroutines.GlobalScope.launch {
-                                    try {
-                                        val pdfDownloaderClass = Class.forName("org.marimon.sigc.services.PDFDownloader")
-                                        
-                                        // Para funciones suspend, necesitamos usar getDeclaredMethod
-                                        val downloadMethod = pdfDownloaderClass.getDeclaredMethod("downloadPDF", 
-                                            android.content.Context::class.java,
-                                            org.marimon.sigc.model.Transaccion::class.java
-                                        )
-                                        
-                                        // Llamar el método suspend
-                                        downloadMethod.invoke(null, context, transaccionCompleta)
-                                        println("PDF descargado automáticamente")
-                                    } catch (e: Exception) {
-                                        println("ERROR: No se pudo descargar PDF: ${e.message}")
-                                        e.printStackTrace()
-                                    }
+                            // Descargar PDF usando PDFServiceManager
+                            coroutineScope.launch {
+                                val success = PDFServiceManager.downloadPDF(transaccionCompleta)
+                                if (success) {
+                                    println("PDF descargado automáticamente")
+                                } else {
+                                    println("ERROR: No se pudo descargar PDF")
                                 }
-                            } else {
-                                println("No hay contexto disponible para descargar PDF")
                             }
                         }
                     ) {

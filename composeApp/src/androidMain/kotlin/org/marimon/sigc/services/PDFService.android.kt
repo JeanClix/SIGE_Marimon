@@ -24,15 +24,13 @@ actual class PDFService(private val context: Context) {
             if (pdfFilePath != null) {
                 Log.d("PDFService", "PDF generado exitosamente: $pdfFilePath")
                 
-                // Abrir el archivo PDF con una aplicación externa
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    val uri = Uri.fromFile(File(pdfFilePath))
-                    setDataAndType(uri, "application/pdf")
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-                
-                context.startActivity(intent)
-                Log.d("PDFService", "PDF abierto con aplicación externa")
+                // Mostrar notificación de éxito en lugar de abrir directamente
+                android.widget.Toast.makeText(
+                    context,
+                    "PDF generado exitosamente en: Downloads/Marimon/",
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
+                Log.d("PDFService", "PDF generado en: $pdfFilePath")
                 true
             } else {
                 Log.e("PDFService", "Error generando PDF")
@@ -84,15 +82,13 @@ actual class PDFService(private val context: Context) {
                     }
                 )
                 
-                // Abrir el archivo PDF con una aplicación externa
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    val uri = Uri.fromFile(File(pdfFilePath))
-                    setDataAndType(uri, "application/pdf")
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-                
-                context.startActivity(intent)
-                Log.d("PDFService", "PDF abierto con aplicación externa")
+                // Mostrar notificación de éxito en lugar de abrir directamente
+                android.widget.Toast.makeText(
+                    context,
+                    "PDF generado exitosamente en: Downloads/Marimon/",
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
+                Log.d("PDFService", "PDF generado en: $pdfFilePath")
                 true
                 
             } else {
