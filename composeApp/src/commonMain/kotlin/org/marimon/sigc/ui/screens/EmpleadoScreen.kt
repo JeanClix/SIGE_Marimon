@@ -40,7 +40,8 @@ fun EmpleadoScreen(
     authViewModel: AuthViewModel,
     onLogout: () -> Unit,
     onNavigateToAutopartes: () -> Unit = { },
-    onNavigateToEySAutopartes: () -> Unit = { }
+    onNavigateToEySAutopartes: () -> Unit = { },
+    onNavigateToTransaccion: () -> Unit = { }
 ) {
     Column(
         modifier = Modifier
@@ -212,13 +213,13 @@ fun EmpleadoScreen(
                         )
 
 
-                        // Otras opciones futuras
+                        // Emitir comprobante de pago
                         NavigationOption(
-                            icon = "🚗",
-                            title = "Gestión de Vehículos",
-                            description = "Administrar información de vehículos",
-                            enabled = false,
-                            onItemClick = { }
+                            icon = "📋",
+                            title = "Emitir comprobante de pago",
+                            description = "Registrar transacciones y generar comprobantes",
+                            enabled = true,
+                            onItemClick = onNavigateToTransaccion
                         )
                         
                         NavigationOption(
