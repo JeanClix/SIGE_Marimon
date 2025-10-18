@@ -13,11 +13,18 @@ import org.marimon.sigc.ui.screens.empleado.AutopartesScreen
 import org.marimon.sigc.ui.screens.empleado.EySAutopartesScreen
 import org.marimon.sigc.ui.screens.empleado.productos.EntradaProductosScreen
 import org.marimon.sigc.ui.screens.empleado.productos.SalidaProductosScreen
+import org.marimon.sigc.ui.screens.empleado.TransaccionScreen
+import org.marimon.sigc.services.PDFService
+import org.marimon.sigc.services.PDFServiceManager
 import org.marimon.sigc.viewmodel.AuthViewModel
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Inicializar el servicio de PDF
+        PDFServiceManager.initialize(PDFService(this))
+        
         setContent {
             MaterialTheme {
                 val authViewModel = remember { AuthViewModel() }
@@ -71,6 +78,11 @@ class LoginActivity : ComponentActivity() {
                                         println("DEBUG: onNavigateToEySAutopartes callback ejecutado")
                                         currentScreen = "eys_autopartes"
                                         println("DEBUG: currentScreen establecido a: eys_autopartes")
+                                    },
+                                    onNavigateToTransaccion = {
+                                        println("DEBUG: onNavigateToTransaccion callback ejecutado")
+                                        currentScreen = "transaccion"
+                                        println("DEBUG: currentScreen establecido a: transaccion")
                                     }
                                 )
                             }
@@ -132,6 +144,21 @@ class LoginActivity : ComponentActivity() {
                                     onNavigateToAutopartes = {
                                         println("DEBUG: Navegando a autopartes desde salida")
                                         currentScreen = "autopartes"
+                                    }
+                                )
+                            }
+                            "transaccion" -> {
+                                println("DEBUG: Mostrando TransaccionScreen")
+                                TransaccionScreen(
+                                    empleado = currentEmpleado!!,
+                                    onNavigateBack = {
+                                        println("DEBUG: onNavigateBack (Transaccion) callback ejecutado")
+                                        currentScreen = "empleado"
+                                        println("DEBUG: currentScreen establecido a: empleado")
+                                    },
+                                    onSuccess = { message ->
+                                        println("DEBUG: Transacción exitosa: $message")
+                                        // Aquí se podría mostrar un diálogo de éxito o navegar de vuelta
                                     }
                                 )
                             }

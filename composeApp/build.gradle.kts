@@ -49,6 +49,13 @@ kotlin {
             implementation("com.squareup.okhttp3:okhttp:4.11.0")
             implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
             
+            // PDF Generation
+            implementation("com.itextpdf:itext7-core:7.2.5")
+            
+            // Email sending
+            implementation("com.sun.mail:android-mail:1.6.7")
+            implementation("com.sun.mail:android-activation:1.6.7")
+            
             // Coil para carga de imágenes
             implementation("io.coil-kt:coil-compose:2.4.0")
         }
@@ -57,6 +64,8 @@ kotlin {
         }
         jsMain.dependencies {
             implementation(libs.ktor.client.js)
+            // EmailJS para envío de emails
+            implementation(npm("emailjs-com", "^4.3.2"))
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -75,6 +84,7 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.coroutines.core)
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -96,6 +106,13 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/LICENSE.md"
+            excludes += "/META-INF/LICENSE.txt"
+            excludes += "/META-INF/NOTICE.md"
+            excludes += "/META-INF/NOTICE.txt"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/META-INF/LICENSE"
+            excludes += "/META-INF/NOTICE"
         }
     }
     buildTypes {
