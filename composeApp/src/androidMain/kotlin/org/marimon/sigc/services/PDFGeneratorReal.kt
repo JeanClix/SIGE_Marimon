@@ -135,7 +135,16 @@ object PDFGeneratorReal {
 
             document.close()
 
+            // Notificar al sistema que se creó un nuevo archivo
+            val intent = android.content.Intent(android.content.Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
+            val uri = android.net.Uri.fromFile(pdfFile)
+            intent.data = uri
+            context.sendBroadcast(intent)
+
             Log.d("PDFGeneratorReal", "PDF generado exitosamente: ${pdfFile.absolutePath}")
+            Log.d("PDFGeneratorReal", "Archivo existe: ${pdfFile.exists()}")
+            Log.d("PDFGeneratorReal", "Tamaño del archivo: ${pdfFile.length()} bytes")
+            
             pdfFile.absolutePath
 
         } catch (e: IOException) {

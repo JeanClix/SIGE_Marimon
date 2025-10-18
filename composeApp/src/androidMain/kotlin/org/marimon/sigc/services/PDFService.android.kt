@@ -24,12 +24,14 @@ actual class PDFService(private val context: Context) {
             if (pdfFilePath != null) {
                 Log.d("PDFService", "PDF generado exitosamente: $pdfFilePath")
                 
-                // Mostrar notificación de éxito en lugar de abrir directamente
-                android.widget.Toast.makeText(
-                    context,
-                    "PDF generado exitosamente en: Downloads/Marimon/",
-                    android.widget.Toast.LENGTH_LONG
-                ).show()
+                // Mostrar notificación de éxito con ruta específica
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    android.widget.Toast.makeText(
+                        context,
+                        "PDF guardado en: Downloads/Marimon/\nArchivo: ${File(pdfFilePath).name}",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                }
                 Log.d("PDFService", "PDF generado en: $pdfFilePath")
                 true
             } else {
@@ -82,12 +84,14 @@ actual class PDFService(private val context: Context) {
                     }
                 )
                 
-                // Mostrar notificación de éxito en lugar de abrir directamente
-                android.widget.Toast.makeText(
-                    context,
-                    "PDF generado exitosamente en: Downloads/Marimon/",
-                    android.widget.Toast.LENGTH_LONG
-                ).show()
+                // Mostrar notificación de éxito con ruta específica
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    android.widget.Toast.makeText(
+                        context,
+                        "PDF guardado en: Downloads/Marimon/\nArchivo: ${File(pdfFilePath).name}",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                }
                 Log.d("PDFService", "PDF generado en: $pdfFilePath")
                 true
                 
