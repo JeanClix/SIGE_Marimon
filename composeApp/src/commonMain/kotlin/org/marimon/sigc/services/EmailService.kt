@@ -9,6 +9,16 @@ object EmailService {
     private const val EMAILJS_TEMPLATE_ID = "template_cc56uwo"
     private const val EMAILJS_PUBLIC_KEY = "UJr54Vn1D09_YlRYg"
 
+    /**
+     * Formatea un número decimal a 2 decimales de manera multiplataforma
+     */
+    private fun formatCurrency(amount: Double): String {
+        val rounded = (amount * 100).toInt() / 100.0
+        val whole = rounded.toInt()
+        val decimal = ((rounded - whole) * 100).toInt()
+        return "$whole.${decimal.toString().padStart(2, '0')}"
+    }
+
     fun generarAsuntoEmail(tipoComprobante: String, numeroComprobante: String): String {
         return "Comprobante de Pago - $tipoComprobante N° $numeroComprobante - Automotriz Marimon"
     }
@@ -22,7 +32,7 @@ object EmailService {
         return """
             Estimado(a) $nombreCliente,
 
-            Adjuntamos su $tipoComprobante N° $numeroComprobante por un total de S/ ${String.format("%.2f", total)}.
+            Adjuntamos su $tipoComprobante N° $numeroComprobante por un total de S/ ${formatCurrency(total)}.
 
             Gracias por su preferencia.
 

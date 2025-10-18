@@ -561,7 +561,7 @@ fun TransaccionScreen(
                             )
                             
                             val pdfContent = transaccionViewModel.generarPDF(transaccionCompleta)
-                            val fileName = "${transaccionCompleta.tipoComprobante.valor}_${String.format("%08d", transaccionCompleta.id)}_${transaccionCompleta.dniRuc}"
+                            val fileName = "${transaccionCompleta.tipoComprobante.valor}_${transaccionCompleta.id.toString().padStart(8, '0')}_${transaccionCompleta.dniRuc}"
                             
                             // Descargar PDF usando PDFServiceManager
                             coroutineScope.launch {

@@ -2,46 +2,65 @@ package org.marimon.sigc.ui.screens.empleado.productos
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import org.marimon.sigc.model.Empleado
 import org.marimon.sigc.model.Movimiento
 import org.marimon.sigc.model.Producto
+import org.marimon.sigc.model.TipoMovimiento
 import org.marimon.sigc.ui.components.EmpleadoTopBar
-import org.marimon.sigc.ui.components.ProductImage
+import org.marimon.sigc.ui.components.FilterButton
 import org.marimon.sigc.ui.components.MovimientoCard
 import org.marimon.sigc.ui.components.MovimientoDetailModal
 import org.marimon.sigc.ui.components.MovimientoEmptyState
-import org.marimon.sigc.ui.components.PaginationControls
-import org.marimon.sigc.ui.components.rememberPaginationState
-import org.marimon.sigc.ui.components.filterMovimientos
 import org.marimon.sigc.ui.components.MovimientoFilters
-import org.marimon.sigc.ui.components.FilterButton
 import org.marimon.sigc.ui.components.MovimientoFiltersModal
+import org.marimon.sigc.ui.components.PaginationControls
+import org.marimon.sigc.ui.components.ProductImage
+import org.marimon.sigc.ui.components.filterMovimientos
 import org.marimon.sigc.ui.components.modals.RegistroSalidaModal
-import org.marimon.sigc.viewmodel.ProductoViewModel
+import org.marimon.sigc.ui.components.rememberPaginationState
 import org.marimon.sigc.viewmodel.MovimientoViewModel
-import org.marimon.sigc.model.MovimientoCreate
-import org.marimon.sigc.model.TipoMovimiento
 
 // --- Colores y Estilos ---
 private val RedMarimon = Color(0xFFFF0000)
@@ -303,26 +322,63 @@ fun SalidaProductosScreen(
             )
         }
 
-        // Diálogo de confirmación de registro exitoso
+        // Diálogo de confirmación de registro exitoso con nuevo estilo
         if (showRegistroDialog) {
-            AlertDialog(
-                onDismissRequest = { showRegistroDialog = false },
-                title = {
-                    Text("Salida Registrada", fontWeight = FontWeight.Bold)
-                },
-                text = {
-                    Text("La salida de producto se ha registrado correctamente.")
-                },
-                confirmButton = {
-                    Button(
-                        onClick = { showRegistroDialog = false },
-                        colors = ButtonDefaults.buttonColors(containerColor = RSalida)
+            Dialog(onDismissRequest = { showRegistroDialog = false }) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("Aceptar", color = Color.White)
+                        // Ícono de éxito (círculo verde con check)
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(Color(0xFFFF383C), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("✓", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Título
+                        Text(
+                            "Salida Registrada",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Mensaje
+                        Text(
+                            "La salida de producto se ha registrado correctamente.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        // Botón de aceptar
+                        Button(
+                            onClick = { showRegistroDialog = false },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = RSalida),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Aceptar", color = Color.White)
+                        }
                     }
-                },
-                containerColor = Color.White
-            )
+                }
+            }
         }
     }
 }
