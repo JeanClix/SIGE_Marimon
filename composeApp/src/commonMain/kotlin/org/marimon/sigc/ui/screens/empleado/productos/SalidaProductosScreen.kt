@@ -56,7 +56,8 @@ private val BorderColor = Color(0xFFE0E0E0)
 @Composable
 fun SalidaProductosScreen(
     empleado: Empleado,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToAutopartes: () -> Unit = {}
 ) {
     var filters by remember { mutableStateOf(MovimientoFilters()) }
     var showRegistroDialog by remember { mutableStateOf(false) }
@@ -65,21 +66,21 @@ fun SalidaProductosScreen(
     var showDetailModal by remember { mutableStateOf(false) }
     var selectedMovimiento by remember { mutableStateOf<Movimiento?>(null) }
     var currentPage by remember { mutableIntStateOf(1) }
-    
+
     // ViewModels
     val movimientoViewModel = remember { MovimientoViewModel() }
     val movimientos = movimientoViewModel.movimientos
-    
+
     // Cargar movimientos de salida al inicializar
     LaunchedEffect(Unit) {
         movimientoViewModel.cargarMovimientosPorTipo(TipoMovimiento.SALIDA)
     }
-    
+
     // Obtener lista de productos únicos para el filtro
     val availableProducts = remember(movimientos.toList()) {
         movimientos.mapNotNull { it.productoNombre }.distinct().sorted()
     }
-    
+
     // Obtener lista de categorías únicas (extraídas de las notas)
     val availableCategories = remember(movimientos.toList()) {
         movimientos.mapNotNull { movimiento ->
@@ -90,7 +91,7 @@ fun SalidaProductosScreen(
             }
         }.distinct().sorted()
     }
-    
+
     // Calcular número de filtros activos (excluyendo búsqueda)
     val activeFiltersCount = remember(filters) {
         var count = 0
@@ -101,7 +102,7 @@ fun SalidaProductosScreen(
         if (filters.tipo != null) count++
         count
     }
-    
+
     // Filtrar movimientos por filtros y ordenar cronológicamente (más nuevos primero)
     val movimientosFiltrados = remember(movimientos.toList(), filters) {
         val filtrados = filterMovimientos(movimientos.toList(), filters)
@@ -113,14 +114,14 @@ fun SalidaProductosScreen(
         }
         result
     }
-    
+
     // Estado de paginación
     val paginationState = rememberPaginationState(
         items = movimientosFiltrados,
         itemsPerPage = 6,
         currentPage = currentPage
     )
-    
+
     // Ajustar página actual si es mayor al total de páginas
     LaunchedEffect(paginationState.totalPages) {
         if (currentPage > paginationState.totalPages) {
@@ -158,7 +159,7 @@ fun SalidaProductosScreen(
                     fontWeight = FontWeight.Bold,
                     color = TextPrimaryColor
                 )
-                
+
                 Button(
                     onClick = { showRegistroForm = true },
                     colors = ButtonDefaults.buttonColors(containerColor = RSalida),
@@ -167,7 +168,7 @@ fun SalidaProductosScreen(
                     Text("📤 Registrar", color = Color.White, fontWeight = FontWeight.Medium)
                 }
             }
-            
+
             // Barra de búsqueda y botón de filtros
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -175,7 +176,7 @@ fun SalidaProductosScreen(
             ) {
                 OutlinedTextField(
                     value = filters.searchText,
-                    onValueChange = { 
+                    onValueChange = {
                         filters = filters.copy(searchText = it)
                         currentPage = 1
                     },
@@ -188,7 +189,7 @@ fun SalidaProductosScreen(
                     shape = RoundedCornerShape(12.dp),
                     trailingIcon = {
                         if (filters.searchText.isNotEmpty()) {
-                            IconButton(onClick = { 
+                            IconButton(onClick = {
                                 filters = filters.copy(searchText = "")
                                 currentPage = 1
                             }) {
@@ -197,16 +198,16 @@ fun SalidaProductosScreen(
                         }
                     }
                 )
-                
+
                 FilterButton(
                     onClick = { showFiltersModal = true },
                     activeFiltersCount = activeFiltersCount,
                     accentColor = RSalida
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Grid de movimientos dinámico
             if (paginationState.itemsInCurrentPage.isEmpty() && movimientos.isEmpty()) {
                 MovimientoEmptyState(
@@ -247,7 +248,7 @@ fun SalidaProductosScreen(
                     }
                 }
             }
-            
+
             // Paginación
             PaginationControls(
                 currentPage = currentPage,
@@ -255,7 +256,7 @@ fun SalidaProductosScreen(
                 onPageChange = { currentPage = it }
             )
         }
-        
+
         // Modal de formulario de registro
         if (showRegistroForm) {
             RegistroSalidaModal(
@@ -267,10 +268,14 @@ fun SalidaProductosScreen(
                     movimientoViewModel.cargarMovimientosPorTipo(TipoMovimiento.SALIDA)
                 },
                 movimientoViewModel = movimientoViewModel,
-                empleado = empleado
+                empleado = empleado,
+                onNavigateToAutopartes = {
+                    showRegistroForm = false
+                    onNavigateToAutopartes()
+                }
             )
         }
-        
+
         // Modal de filtros
         if (showFiltersModal) {
             MovimientoFiltersModal(
@@ -286,18 +291,18 @@ fun SalidaProductosScreen(
                 accentColor = RSalida
             )
         }
-        
+
         // Modal de detalle del movimiento
         if (showDetailModal && selectedMovimiento != null) {
             MovimientoDetailModal(
                 movimiento = selectedMovimiento!!,
-                onDismiss = { 
+                onDismiss = {
                     showDetailModal = false
                     selectedMovimiento = null
                 }
             )
         }
-        
+
         // Diálogo de confirmación de registro exitoso
         if (showRegistroDialog) {
             AlertDialog(
@@ -349,9 +354,9 @@ private fun ProductoSalidaCard(
                 modifier = Modifier.size(60.dp),
                 fallbackEmoji = "📦"
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             // Código del producto
             Text(
                 producto.codigo,
@@ -359,7 +364,7 @@ private fun ProductoSalidaCard(
                 color = TextSecondaryColor,
                 fontWeight = FontWeight.Medium
             )
-            
+
             // Precio
             Text(
                 "S/ ${producto.precio}",
@@ -367,7 +372,7 @@ private fun ProductoSalidaCard(
                 color = TextPrimaryColor,
                 fontWeight = FontWeight.Bold
             )
-            
+
             // Nombre del producto
             Text(
                 producto.nombre,
@@ -376,9 +381,9 @@ private fun ProductoSalidaCard(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
-            
+
             Spacer(modifier = Modifier.weight(1f))
-            
+
             // Stock
             Text(
                 "Stock: ${producto.cantidad}",

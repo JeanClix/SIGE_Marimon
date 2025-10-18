@@ -31,7 +31,8 @@ fun RegistroSalidaModal(
     onDismiss: () -> Unit,
     onRegistrar: () -> Unit,
     movimientoViewModel: MovimientoViewModel,
-    empleado: Empleado
+    empleado: Empleado,
+    onNavigateToAutopartes: () -> Unit = {}
 ) {
     var cantidad by remember { mutableStateOf("") }
     var selectedProduct by remember { mutableStateOf<Producto?>(null) }
@@ -40,38 +41,38 @@ fun RegistroSalidaModal(
     var newProductName by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
     var successMessage by remember { mutableStateOf("") }
-    
+
     // ViewModels
     val productoViewModel = remember { ProductoViewModel() }
     val productos = productoViewModel.productos
-    
+
     // Cargar productos al inicializar
     LaunchedEffect(Unit) {
         productoViewModel.cargarProductos()
     }
-    
+
     // Función para registrar salida
     fun registrarSalida() {
         errorMessage = ""
-        
+
         // Validaciones
         if (selectedProduct == null || selectedProduct?.id == 0) {
             errorMessage = "Debe seleccionar un producto válido"
             return
         }
-        
+
         if (cantidad.isBlank() || cantidad.toIntOrNull() == null || cantidad.toInt() <= 0) {
             errorMessage = "La cantidad debe ser un número mayor a 0"
             return
         }
-        
+
         // Validar stock disponible
         val cantidadSalida = cantidad.toInt()
         if (cantidadSalida > selectedProduct!!.cantidad) {
             errorMessage = "No hay suficiente stock. Disponible: ${selectedProduct!!.cantidad}"
             return
         }
-        
+
         // Crear movimiento
         val movimiento = MovimientoCreate(
             tipo = TipoMovimiento.SALIDA,
@@ -80,7 +81,7 @@ fun RegistroSalidaModal(
             cantidad = cantidadSalida,
             nota = "Salida registrada - Producto: ${selectedProduct!!.nombre} - Empleado: ${empleado.nombre}"
         )
-        
+
         // Registrar en el ViewModel con callbacks
         movimientoViewModel.registrarMovimiento(
             movimiento = movimiento,
@@ -125,7 +126,7 @@ fun RegistroSalidaModal(
                         )
                     }
                 }
-                
+
                 // Selector de Producto con Autocompletado
                 Text(
                     "Producto",
@@ -133,11 +134,11 @@ fun RegistroSalidaModal(
                     fontWeight = FontWeight.Bold,
                     color = TextPrimaryColor
                 )
-                
+
                 AutoCompleteProductField(
                     productos = productos.filter { it.cantidad > 0 }, // Solo productos con stock
                     selectedProduct = selectedProduct,
-                    onProductSelected = { 
+                    onProductSelected = {
                         selectedProduct = it
                         // Limpiar cantidad si el producto cambió
                         if (cantidad.toIntOrNull() ?: 0 > (it?.cantidad ?: 0)) {
@@ -146,17 +147,16 @@ fun RegistroSalidaModal(
                         errorMessage = ""
                     },
                     onCreateNewProduct = { productName ->
-                        newProductName = productName
-                        showCreateProductDialog = true
+                        // Cerrar el modal y navegar a AutopartesScreen
+                        onDismiss()
+                        onNavigateToAutopartes()
                     },
                     searchText = searchText,
                     onSearchTextChange = { searchText = it },
                     focusedBorderColor = RSalida,
                     label = "Buscar producto con stock...",
                     placeholder = "Escribe el nombre o código del producto"
-                )
-                
-                // Advertencia si el producto tiene poco stock
+                )                // Advertencia si el producto tiene poco stock
                 if (selectedProduct != null && selectedProduct?.cantidad != null && selectedProduct!!.cantidad <= 5) {
                     Card(
                         colors = CardDefaults.cardColors(
@@ -172,7 +172,7 @@ fun RegistroSalidaModal(
                         )
                     }
                 }
-                
+
                 // Cantidad
                 Text(
                     "Cantidad",
@@ -180,11 +180,11 @@ fun RegistroSalidaModal(
                     fontWeight = FontWeight.Bold,
                     color = TextPrimaryColor
                 )
-                
+
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = cantidad,
-                        onValueChange = { 
+                        onValueChange = {
                             if (it.all { char -> char.isDigit() }) {
                                 val newCantidad = it.toIntOrNull() ?: 0
                                 if (selectedProduct == null || newCantidad <= selectedProduct!!.cantidad) {
@@ -212,10 +212,10 @@ fun RegistroSalidaModal(
                             }
                         }
                     )
-                    
+
                     // Botones + y -
                     IconButton(
-                        onClick = { 
+                        onClick = {
                             val current = cantidad.toIntOrNull() ?: 0
                             if (current > 0) {
                                 cantidad = (current - 1).toString()
@@ -228,9 +228,9 @@ fun RegistroSalidaModal(
                     ) {
                         Text("−", fontSize = 24.sp, fontWeight = FontWeight.Bold)
                     }
-                    
+
                     IconButton(
-                        onClick = { 
+                        onClick = {
                             val current = cantidad.toIntOrNull() ?: 0
                             val maxStock = selectedProduct?.cantidad ?: 0
                             if (current < maxStock) {
@@ -243,8 +243,8 @@ fun RegistroSalidaModal(
                         modifier = Modifier
                             .size(56.dp)
                             .background(
-                                if (selectedProduct != null && (cantidad.toIntOrNull() ?: 0) < selectedProduct!!.cantidad) 
-                                    RSalida else Color.Gray, 
+                                if (selectedProduct != null && (cantidad.toIntOrNull() ?: 0) < selectedProduct!!.cantidad)
+                                    RSalida else Color.Gray,
                                 CircleShape
                             ),
                         enabled = selectedProduct != null && (cantidad.toIntOrNull() ?: 0) < selectedProduct!!.cantidad
@@ -252,7 +252,7 @@ fun RegistroSalidaModal(
                         Text("+", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 }
-                
+
                 // Información adicional si hay producto seleccionado
                 if (selectedProduct != null && selectedProduct?.id != 0) {
                     Text(
@@ -277,12 +277,12 @@ fun RegistroSalidaModal(
                 ) {
                     Text("Cancelar", color = Color.Black)
                 }
-                
+
                 Button(
                     onClick = { registrarSalida() },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (selectedProduct?.id != 0 && cantidad.isNotEmpty() && errorMessage.isEmpty()) 
+                        containerColor = if (selectedProduct?.id != 0 && cantidad.isNotEmpty() && errorMessage.isEmpty())
                             RSalida else Color.Gray
                     ),
                     shape = RoundedCornerShape(8.dp),
@@ -295,12 +295,12 @@ fun RegistroSalidaModal(
         dismissButton = {},
         containerColor = Color.White
     )
-    
+
     // Diálogo para crear nuevo producto
     if (showCreateProductDialog) {
         AlertDialog(
-            onDismissRequest = { 
-                showCreateProductDialog = false 
+            onDismissRequest = {
+                showCreateProductDialog = false
                 newProductName = ""
             },
             title = { Text("Crear Nuevo Producto") },
@@ -328,8 +328,8 @@ fun RegistroSalidaModal(
             },
             dismissButton = {
                 TextButton(
-                    onClick = { 
-                        showCreateProductDialog = false 
+                    onClick = {
+                        showCreateProductDialog = false
                         newProductName = ""
                     }
                 ) {

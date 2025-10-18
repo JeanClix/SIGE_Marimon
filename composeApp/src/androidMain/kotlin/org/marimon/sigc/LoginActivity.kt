@@ -24,15 +24,15 @@ class LoginActivity : ComponentActivity() {
                 val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
                 val userType by authViewModel.userType.collectAsState()
                 val currentEmpleado by authViewModel.currentEmpleado.collectAsState()
-                
+
                 // Estado para controlar la navegación dentro del empleado
                 var currentScreen by remember { mutableStateOf("empleado") }
-                
+
                 // Log del estado actual
                 LaunchedEffect(currentScreen) {
                     println("DEBUG: currentScreen cambió a: $currentScreen")
                 }
-                
+
                 when {
                     !isLoggedIn -> {
                         LoginScreen(
@@ -113,6 +113,10 @@ class LoginActivity : ComponentActivity() {
                                         println("DEBUG: onNavigateBack (Entrada) callback ejecutado")
                                         currentScreen = "eys_autopartes"
                                         println("DEBUG: currentScreen establecido a: eys_autopartes")
+                                    },
+                                    onNavigateToAutopartes = {
+                                        println("DEBUG: Navegando a autopartes desde entrada")
+                                        currentScreen = "autopartes"
                                     }
                                 )
                             }
@@ -124,6 +128,10 @@ class LoginActivity : ComponentActivity() {
                                         println("DEBUG: onNavigateBack (Salida) callback ejecutado")
                                         currentScreen = "eys_autopartes"
                                         println("DEBUG: currentScreen establecido a: eys_autopartes")
+                                    },
+                                    onNavigateToAutopartes = {
+                                        println("DEBUG: Navegando a autopartes desde salida")
+                                        currentScreen = "autopartes"
                                     }
                                 )
                             }

@@ -33,7 +33,8 @@ fun RegistroEntradaModal(
     onDismiss: () -> Unit,
     onRegistrar: () -> Unit,
     movimientoViewModel: MovimientoViewModel,
-    empleado: Empleado
+    empleado: Empleado,
+    onNavigateToAutopartes: () -> Unit = {}
 ) {
     var cantidad by remember { mutableStateOf("") }
     var categoria by remember { mutableStateOf("") }
@@ -269,8 +270,9 @@ fun RegistroEntradaModal(
                     selectedProduct = selectedProduct,
                     onProductSelected = { selectedProduct = it },
                     onCreateNewProduct = { productName ->
-                        newProductName = productName
-                        showCreateProductDialog = true
+                        // Cerrar el modal y navegar a AutopartesScreen
+                        onDismiss()
+                        onNavigateToAutopartes()
                     },
                     searchText = searchText,
                     onSearchTextChange = { searchText = it },

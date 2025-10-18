@@ -57,7 +57,8 @@ private val BorderColor = Color(0xFFE0E0E0)
 @Composable
 fun EntradaProductosScreen(
     empleado: Empleado,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToAutopartes: () -> Unit = {}
 ) {
     var filters by remember { mutableStateOf(MovimientoFilters()) }
     var showRegistroForm by remember { mutableStateOf(false) }
@@ -266,7 +267,11 @@ fun EntradaProductosScreen(
                     movimientoViewModel.cargarMovimientosPorTipo(TipoMovimiento.ENTRADA)
                 },
                 movimientoViewModel = movimientoViewModel,
-                empleado = empleado
+                empleado = empleado,
+                onNavigateToAutopartes = {
+                    showRegistroForm = false
+                    onNavigateToAutopartes()
+                }
             )
         }
 
