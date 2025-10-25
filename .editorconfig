@@ -1,0 +1,39 @@
+# .editorconfig
+# Este archivo es usado por ktlint para aplicar reglas de estilo consistentes
+
+root = true
+
+[*.{kt,kts}]
+# Tamaño de indentación
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+end_of_line = lf
+
+# Reglas específicas de Kotlin
+ij_kotlin_allow_trailing_comma = true
+ij_kotlin_keep_blank_lines_between_package_and_header = 1
+ij_kotlin_keep_blank_lines_in_declarations = 0
+ij_kotlin_keep_blank_lines_in_code = 1
+ij_kotlin_packages_to_use_import_on_demand = kotlinx.android.synthetic.**:java.util.*
+
+# Máximo de líneas por función (recomendado)
+ij_kotlin_line_break_after_opening_bracket = false
+
+[*.{java}]
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+end_of_line = lf
+
+[*.{xml,gradle}]
+indent_size = 2
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+end_of_line = lf
+
+[*.{md,markdown}]
+trim_trailing_whitespace = false

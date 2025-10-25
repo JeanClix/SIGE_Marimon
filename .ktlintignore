@@ -1,0 +1,19 @@
+# Generated files
+**/build/**
+**/generated/**
+**/.gradle/**
+**/.idea/**
+
+# Gradle wrapper
+**/gradlew
+**/gradlew.bat
+
+# iOS specific
+**/iosApp/**
+
+# Node modules
+**/node_modules/**
+**/kotlin-js-store/**
+
+# Build output
+**/outputs/**
