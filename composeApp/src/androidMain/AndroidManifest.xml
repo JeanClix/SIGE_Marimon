@@ -4,16 +4,16 @@
     <!-- Permisos de red necesarios para Supabase -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    
+
     <!-- Permisos para acceso a imágenes -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" 
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
-    
+
     <!-- Permisos para descarga de PDFs -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" 
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         android:maxSdkVersion="29" />
 
     <application
@@ -35,6 +35,9 @@
         <activity
             android:exported="true"
             android:name="org.marimon.sigc.MainActivity" />
+        <activity
+            android:exported="false"
+            android:name="org.marimon.sigc.RecuperacionPasswordActivity" />
     </application>
 
 </manifest>

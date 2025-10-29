@@ -1,6 +1,8 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+import java.io.FileInputStream
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -10,13 +12,28 @@ plugins {
     alias(libs.plugins.kotlinx.serialization)
 }
 
+// Leer credenciales de Gmail desde local.properties o variables de entorno
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
+}
+
+val gmailUsername = localProperties.getProperty("gmail.username")
+    ?: System.getenv("GMAIL_USERNAME")
+    ?: "default@gmail.com"
+
+val gmailAppPassword = localProperties.getProperty("gmail.app.password")
+    ?: System.getenv("GMAIL_APP_PASSWORD")
+    ?: "defaultpassword"
+
 kotlin {
     androidTarget {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     listOf(
         iosArm64(),
         iosSimulatorArm64()
@@ -26,36 +43,36 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     js {
         browser()
         binaries.executable()
     }
-    
+
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()
         binaries.executable()
     }
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation("androidx.navigation:navigation-compose:2.7.7")
             implementation(libs.ktor.client.cio)
-            
+
             // HTTP simple para subida de archivos
             implementation("com.squareup.okhttp3:okhttp:4.11.0")
             implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
-            
+
             // PDF Generation
             implementation("com.itextpdf:itext7-core:7.2.5")
-            
+
             // Email sending
             implementation("com.sun.mail:android-mail:1.6.7")
             implementation("com.sun.mail:android-activation:1.6.7")
-            
+
             // Coil para carga de imágenes
             implementation("io.coil-kt:coil-compose:2.4.0")
         }
@@ -102,6 +119,14 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
+
+        // BuildConfig fields para credenciales de email
+        buildConfigField("String", "GMAIL_USERNAME", "\"$gmailUsername\"")
+        buildConfigField("String", "GMAIL_APP_PASSWORD", "\"$gmailAppPassword\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
     packaging {
         resources {

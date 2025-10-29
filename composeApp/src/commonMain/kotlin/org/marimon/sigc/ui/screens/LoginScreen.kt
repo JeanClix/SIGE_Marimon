@@ -32,7 +32,8 @@ private val TextFooter = Color(0xFF666666) // Color específico para el footer d
 @Composable
 fun LoginScreen(
     authViewModel: AuthViewModel,
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    onForgotPassword: () -> Unit = {}
 ) {
     // CAMBIO 1: Inicializar los estados como cadenas vacías para que el placeholder funcione correctamente.
     var email by remember { mutableStateOf("") }
@@ -185,7 +186,7 @@ fun LoginScreen(
                             fontSize = 12.sp
                         )
                         TextButton(
-                            onClick = { /* TODO: Navigate to Forgot Password */ },
+                            onClick = onForgotPassword,
                             contentPadding = PaddingValues(0.dp),
                             modifier = Modifier.height(24.dp)
                         ) {
