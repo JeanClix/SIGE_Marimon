@@ -15,6 +15,7 @@ object Routes {
     const val EMPLOYEES = "user"
     const val PRODUCTS = "circulo"
     const val KPI = "grafico"
+    const val VENTAS = "ventas"
     const val RECUPERAR_PASSWORD = "recuperar_password"
     const val INGRESAR_CODIGO = "ingresar_codigo"
     const val CAMBIAR_PASSWORD = "cambiar_password"
@@ -43,6 +44,10 @@ fun NavigationHost(
 
         composable(Routes.KPI) {
             AdminKPIScreen(navController = navController)
+        }
+
+        composable(Routes.VENTAS) {
+            DashboardVentasScreen(navController = navController)
         }
 
         // Pantalla 1: Recuperar Contraseña
@@ -139,6 +144,22 @@ fun AdminRProductoScreen(navController: NavHostController) {
 fun AdminKPIScreen(navController: NavHostController) {
     AdminKPIApp(
         currentRoute = Routes.KPI,
+        onNavigate = { route ->
+            navController.navigate(route) {
+                popUpTo(navController.graph.startDestinationId) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
+    )
+}
+
+@Composable
+fun DashboardVentasScreen(navController: NavHostController) {
+    DashboardVentasApp(
+        currentRoute = Routes.VENTAS,
         onNavigate = { route ->
             navController.navigate(route) {
                 popUpTo(navController.graph.startDestinationId) {
