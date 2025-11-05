@@ -18,7 +18,7 @@ import androidx.compose.foundation.clickable
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         setContent {
             NavigationHost()
         }
@@ -34,11 +34,17 @@ fun AppAndroidPreview() {
 data class PanelItem(val label: String, val iconRes: Int, val route: String)
 
 @Composable
-fun PanelAdministrativo(onNavigate: (String) -> Unit = {}) {
+fun PanelAdministrativo(
+    onNavigate: (String) -> Unit = {},
+    navController: androidx.navigation.NavHostController? = null
+) {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        TopAdminBar()
+        TopAdminBar(
+            onNotificationsClick = { /* Será manejado en Navigation */ },
+            navController = navController
+        )
 
         Column(
             modifier = Modifier
@@ -105,7 +111,8 @@ fun PanelAdministrativo(onNavigate: (String) -> Unit = {}) {
 @Composable
 fun AppAndroid(
     currentRoute: String = "home",
-    onNavigate: (String) -> Unit = {}
+    onNavigate: (String) -> Unit = {},
+    navController: androidx.navigation.NavHostController? = null
 ) {
     Scaffold(
         bottomBar = {
@@ -120,7 +127,7 @@ fun AppAndroid(
                 .fillMaxSize()
                 .padding(bottom = innerPadding.calculateBottomPadding())
         ) {
-            PanelAdministrativo(onNavigate = onNavigate)
+            PanelAdministrativo(onNavigate = onNavigate, navController = navController)
         }
     }
 }

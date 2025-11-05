@@ -1,9 +1,13 @@
 package org.marimon.sigc
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -13,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 
 data class NavItem(val route: String, val iconRes: Int)
 
@@ -24,7 +29,7 @@ fun CustomBottomNavBar(
 ) {
     val navItems = listOf(
         NavItem("home", R.drawable.home),
-        NavItem("user", R.drawable.user),
+        NavItem(Routes.PROFILE, R.drawable.user),  // Cambiar a profile
         NavItem("circulo", R.drawable.circulo),
         NavItem("grafico", R.drawable.grafico)
     )
@@ -62,7 +67,7 @@ fun CustomBottomNavBar(
                         painter = painterResource(id = item.iconRes),
                         contentDescription = when(item.route) {
                             "home" -> "Inicio"
-                            "user" -> "Empleados"
+                            Routes.PROFILE -> "Perfil"
                             "circulo" -> "Productos"
                             "grafico" -> "Gráficos"
                             else -> null
@@ -77,7 +82,10 @@ fun CustomBottomNavBar(
 }
 
 @Composable
-fun TopAdminBar() {
+fun TopAdminBar(
+    onNotificationsClick: () -> Unit = {},
+    navController: androidx.navigation.NavHostController? = null
+) {
     Surface(
         color = Color(0xFFE53E3E),
         shape = MaterialTheme.shapes.large.copy(
@@ -120,6 +128,45 @@ fun TopAdminBar() {
                         text = "Administrador",
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.White
+                    )
+                }
+            }
+
+            // Ícono de notificaciones (campana)
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clickable {
+                        // Si hay navController, navegar al perfil
+                        if (navController != null) {
+                            navController.navigate(Routes.PROFILE)
+                        } else {
+                            // Si no, usar el callback proporcionado
+                            onNotificationsClick()
+                        }
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Notifications,
+                    contentDescription = "Notificaciones",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+
+                // Badge rojo con número de notificaciones (opcional)
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .background(Color.Yellow, shape = CircleShape)
+                        .align(Alignment.TopEnd),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "3",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFFE53E3E),
+                        modifier = Modifier.padding(2.dp)
                     )
                 }
             }

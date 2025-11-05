@@ -11,6 +11,8 @@ object Routes {
     const val EMPLOYEES = "user"
     const val PRODUCTS = "circulo"
     const val KPI = "grafico"
+    const val NOTIFICATIONS = "notifications"
+    const val PROFILE = "profile"
 }
 
 @Composable
@@ -36,6 +38,14 @@ fun NavigationHost(
         composable(Routes.KPI) {
             AdminKPIScreen(navController = navController)
         }
+
+        composable(Routes.NOTIFICATIONS) {
+            AdminNotificationsScreen(navController = navController)
+        }
+
+        composable(Routes.PROFILE) {
+            AdminProfileScreenWrapper(navController = navController)
+        }
     }
 }
 
@@ -51,7 +61,8 @@ fun AdminMainScreen(navController: NavHostController) {
                 launchSingleTop = true
                 restoreState = true
             }
-        }
+        },
+        navController = navController
     )
 }
 
@@ -99,6 +110,28 @@ fun AdminKPIScreen(navController: NavHostController) {
                 launchSingleTop = true
                 restoreState = true
             }
+        }
+    )
+}
+
+@Composable
+fun AdminNotificationsScreen(navController: NavHostController) {
+    NotificationsScreen(
+        onBackClick = {
+            navController.popBackStack()
+        }
+    )
+}
+
+@Composable
+fun AdminProfileScreenWrapper(navController: NavHostController) {
+    AdminProfileScreen(
+        onNotificationsClick = {
+            navController.navigate(Routes.NOTIFICATIONS)
+        },
+        onLogoutClick = {
+            // Aquí iría la lógica de logout (limpiar sesión, etc.)
+            navController.popBackStack(Routes.HOME, inclusive = false)
         }
     )
 }
