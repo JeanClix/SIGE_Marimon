@@ -9,8 +9,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,14 +18,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import android.content.Intent
-import android.net.Uri
 
-private const val STREAMLIT_URL = "https://marimon-app-s4vp2v6qlwyislga7resbp.streamlit.app/?embed=true&embed_options=show_toolbar,show_padding,show_footer,show_colored_line"
+private const val POWERBI_URL = "https://app.powerbi.com/view?r=eyJrIjoiY2E5YjdkYjgtZjIxNS00NzNlLWFhZjgtYmZiY2QzZmZmMTNhIiwidCI6Ijk4MjAxZmVmLWQ5ZjYtNGU2OC04NGY1LWMyNzA1MDc0ZTM0MiIsImMiOjR9"
 
 @Composable
-fun DashboardVentasScreen(
-    currentRoute: String = "ventas",
+fun DashboardKPIScreen(
+    currentRoute: String = "grafico",
     onNavigate: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -50,18 +46,18 @@ fun DashboardVentasScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 // Header rojo con saludo y botón de retroceso
-                TopAdminBarWithBack(
+                TopKPIBarWithBack(
                     onBackClick = { onNavigate(Routes.HOME) }
                 )
 
-                // WebView con iframe - CRÍTICO: debe tener height definida
-                StreamlitWebView(
-                    url = STREAMLIT_URL,
+                // WebView con Power BI Dashboard
+                PowerBIWebView(
+                    url = POWERBI_URL,
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f), // Ocupa el espacio restante
                     onLoadingStateChange = { isLoading = it }
-                    )
+                )
 
                 // Overlay de carga
                 if (isLoading) {
@@ -83,7 +79,7 @@ fun DashboardVentasScreen(
 }
 
 @Composable
-fun StreamlitWebView(
+fun PowerBIWebView(
     url: String,
     modifier: Modifier = Modifier,
     onLoadingStateChange: (Boolean) -> Unit = {}
@@ -137,7 +133,7 @@ fun StreamlitWebView(
                     loadWithOverviewMode = true
                     useWideViewPort = true
 
-                    // Configuración de zoom
+                    // Configuración de zoom para mejor visualización de los KPIs
                     setSupportZoom(true)
                     builtInZoomControls = true
                     displayZoomControls = false
@@ -147,8 +143,8 @@ fun StreamlitWebView(
                     
                     mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 
-                    // User agent móvil para mejor compatibilidad con Streamlit
-                    userAgentString = "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+                    // User agent desktop para mejor compatibilidad con Power BI
+                    userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
                     cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
                     javaScriptCanOpenWindowsAutomatically = true
@@ -157,8 +153,8 @@ fun StreamlitWebView(
                     mediaPlaybackRequiresUserGesture = false
                 }
 
-                // Cargar URL directamente (sin iframe wrapper)
-                println("Loading Streamlit URL: $url")
+                // Cargar URL directamente
+                println("Loading Power BI Dashboard URL: $url")
                 loadUrl(url)
             }
         },
@@ -172,19 +168,31 @@ fun StreamlitWebView(
 }
 
 @Composable
-fun DashboardVentasApp(
-    currentRoute: String = "ventas",
+fun DashboardKPIApp(
+    currentRoute: String = "grafico",
     onNavigate: (String) -> Unit = {}
 ) {
-    DashboardVentasScreen(
+    DashboardKPIScreen(
         currentRoute = currentRoute,
         onNavigate = onNavigate
     )
 }
 
-// Componente personalizado del header para el dashboard con botón de retroceso
+// Función wrapper para compatibilidad con Navigation.kt
 @Composable
-fun TopAdminBarWithBack(onBackClick: () -> Unit) {
+fun AdminKPIApp(
+    currentRoute: String = "grafico",
+    onNavigate: (String) -> Unit = {}
+) {
+    DashboardKPIApp(
+        currentRoute = currentRoute,
+        onNavigate = onNavigate
+    )
+}
+
+// Componente personalizado del header para el dashboard KPI con botón de retroceso
+@Composable
+fun TopKPIBarWithBack(onBackClick: () -> Unit) {
     Surface(
         color = Color(0xFFE53E3E),
         shape = RoundedCornerShape(
@@ -228,7 +236,7 @@ fun TopAdminBarWithBack(onBackClick: () -> Unit) {
                         color = Color.White
                     )
                     Text(
-                        text = "Administrador",
+                        text = "Dashboard KPI",
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.White
                     )
@@ -237,3 +245,4 @@ fun TopAdminBarWithBack(onBackClick: () -> Unit) {
         }
     }
 }
+
