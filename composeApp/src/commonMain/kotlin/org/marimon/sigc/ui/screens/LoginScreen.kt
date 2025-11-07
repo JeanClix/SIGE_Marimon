@@ -11,6 +11,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -18,6 +20,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import org.marimon.sigc.viewmodel.AuthViewModel
 
 // Colores
@@ -70,14 +74,18 @@ fun LoginScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Placeholder for the Car Image
-            Box(
+            // Imagen de fondo
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data("https://toothspciydsgevyxkol.supabase.co/storage/v1/object/public/productos-imagenes/fondo.jpg")
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "Imagen de fondo",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(250.dp)
-                    .background(Color.Red.copy(alpha = 0.5f)) // Visual placeholder for the image area
+                    .height(250.dp),
+                contentScale = ContentScale.Crop
             )
-            // End of Car Image Placeholder
 
             Spacer(modifier = Modifier.height(20.dp))
 

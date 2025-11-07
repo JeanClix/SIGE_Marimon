@@ -27,6 +27,9 @@ import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.delay
+import org.marimon.sigc.Producto.ReporteProductosDialog
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @Preview
 @Composable
@@ -43,7 +46,10 @@ fun AdminRProductoApp(
     LaunchedEffect(Unit) {
         productoViewModel.cargarProductos()
     }
-    val productos: List<Producto> = productoViewModel.productos
+    // Obtener TODOS los productos (activos e inactivos) desde la BD
+    val todosLosProductos: List<Producto> = productoViewModel.productos
+    // Filtrar solo los activos para mostrar en la lista
+    val productosActivos = todosLosProductos.filter { it.activo }
 
     AdminScreenLayout(
         title = "Registro de Productos",
@@ -51,7 +57,8 @@ fun AdminRProductoApp(
         onNavigate = onNavigate
     ) {
         ProductoListScreen(
-            productos = productos,
+            productos = productosActivos,
+            todosLosProductos = todosLosProductos, // Pasar todos para el reporte
             productoViewModel = productoViewModel
         )
     }
@@ -59,7 +66,8 @@ fun AdminRProductoApp(
 
 @Composable
 fun ProductoListScreen(
-    productos: List<Producto>,
+    productos: List<Producto>, // Solo productos activos para mostrar en la lista
+    todosLosProductos: List<Producto>, // TODOS los productos (activos e inactivos) para el reporte
     productoViewModel: ProductoViewModel
 ) {
     var showDialog by remember { mutableStateOf(false) }
@@ -69,20 +77,30 @@ fun ProductoListScreen(
     var productoAEliminar by remember { mutableStateOf<Producto?>(null) }
     var mensaje by remember { mutableStateOf("") }
     var mostrarMensaje by remember { mutableStateOf(false) }
+    var showReporte by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            Button(
+                onClick = { showReporte = true },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
+            ) {
+                Text("Visualizar Reporte", color = Color.White)
+            }
+
             Button(
                 onClick = { showDialog = true },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
             ) {
-                Text("Registrar Producto", color = Color.White)
+                Text("Registrar", color = Color.White)
             }
 
             productos.forEach { producto ->
@@ -335,6 +353,13 @@ fun ProductoListScreen(
                     color = Color.White
                 )
             }
+        }
+
+        if (showReporte) {
+            ReporteProductosDialog(
+                productos = todosLosProductos, // Usar TODOS los productos para el reporte
+                onDismiss = { showReporte = false }
+            )
         }
     }
 }
