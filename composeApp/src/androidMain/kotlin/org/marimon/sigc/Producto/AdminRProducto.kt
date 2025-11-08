@@ -358,7 +358,13 @@ fun ProductoListScreen(
         if (showReporte) {
             ReporteProductosDialog(
                 productos = todosLosProductos, // Usar TODOS los productos para el reporte
-                onDismiss = { showReporte = false }
+                onDismiss = { showReporte = false },
+                onRefresh = { onComplete ->
+                    // Recargar los productos desde la base de datos
+                    productoViewModel.cargarProductos {
+                        onComplete()
+                    }
+                }
             )
         }
     }

@@ -93,7 +93,7 @@ fun PowerBIWebView(
                     android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                     android.view.ViewGroup.LayoutParams.MATCH_PARENT
                 )
-                
+
                 webViewClient = object : WebViewClient() {
                     override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                         super.onPageStarted(view, url, favicon)
@@ -115,7 +115,7 @@ fun PowerBIWebView(
                         println("WebView Error: $errorCode - $description - URL: $failingUrl")
                         onLoadingStateChange(false)
                     }
-                    
+
                     override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
                         // Permitir que el WebView maneje todas las URLs
                         return false
@@ -140,7 +140,7 @@ fun PowerBIWebView(
 
                     allowContentAccess = true
                     allowFileAccess = false  // Deshabilitar por seguridad
-                    
+
                     mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 
                     // User agent desktop para mejor compatibilidad con Power BI
@@ -148,7 +148,7 @@ fun PowerBIWebView(
 
                     cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
                     javaScriptCanOpenWindowsAutomatically = true
-                    
+
                     // Configuraciones adicionales para mejor compatibilidad
                     mediaPlaybackRequiresUserGesture = false
                 }
@@ -231,12 +231,12 @@ fun TopKPIBarWithBack(onBackClick: () -> Unit) {
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "Hola!",
+                        text = "Presentamos",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White
                     )
                     Text(
-                        text = "Dashboard KPI",
+                        text = "Dashboard para los KPI",
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.White
                     )

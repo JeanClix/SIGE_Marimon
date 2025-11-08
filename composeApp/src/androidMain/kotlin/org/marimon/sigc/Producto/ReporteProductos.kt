@@ -29,10 +29,20 @@ import androidx.compose.ui.geometry.Size
 @Composable
 fun ReporteProductosDialog(
     productos: List<Producto>,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onRefresh: (onComplete: () -> Unit) -> Unit
 ) {
     var ordenarPorStock by remember { mutableStateOf(false) }
-    
+    var isRefreshing by remember { mutableStateOf(false) }
+
+    // Timeout de seguridad para resetear el estado de carga
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            kotlinx.coroutines.delay(5000) // 5 segundos de timeout
+            isRefreshing = false
+        }
+    }
+
     // Ordenar productos por stock si el filtro está activo
     val productosFiltrados = remember(ordenarPorStock, productos) {
         if (ordenarPorStock) {
@@ -41,13 +51,13 @@ fun ReporteProductosDialog(
             productos
         }
     }
-    
+
     // Calcular estadísticas reales con productos filtrados
     val productosActivos = productosFiltrados.filter { it.activo }
     val productosInactivos = productosFiltrados.filter { !it.activo }
     val totalStock = productosActivos.sumOf { it.cantidad }
     val totalValor = productosActivos.sumOf { it.precio * it.cantidad }
-    
+
     // Producto destacado: cambia según el filtro
     val productoDestacado = if (ordenarPorStock) {
         // Si está ordenado, tomar el primero (mayor stock > 0)
@@ -56,11 +66,11 @@ fun ReporteProductosDialog(
         // Si no está ordenado, tomar el de menor stock > 0
         productosActivos.filter { it.cantidad > 0 }.minByOrNull { it.cantidad }
     }
-    
+
     val porcentajeDestacado = if (totalStock > 0 && productoDestacado != null) {
         ((productoDestacado.cantidad.toFloat() / totalStock) * 100).toInt()
     } else 0
-    
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -96,19 +106,19 @@ fun ReporteProductosDialog(
                                 tint = Color.White
                             )
                         }
-                        
+
                         Text(
                             text = "Reporte de Productos",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
-                        
+
                         // Spacer para balancear el layout
                         Spacer(modifier = Modifier.width(48.dp))
                     }
                 }
-                
+
                 // Botón de Ordenar por Stock
                 Row(
                     modifier = Modifier
@@ -131,24 +141,38 @@ fun ReporteProductosDialog(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(if (ordenarPorStock) "Mayor Stock ↓" else "Ordenar Stock")
                     }
-                    
+
                     Button(
-                        onClick = { /* Acción de actualizar - recargar datos */ },
+                        onClick = {
+                            isRefreshing = true
+                            onRefresh {
+                                isRefreshing = false
+                            }
+                        },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color.Black
-                        )
+                        ),
+                        enabled = !isRefreshing
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Actualizar",
-                            modifier = Modifier.size(20.dp)
-                        )
+                        if (isRefreshing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Actualizar",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Actualizar")
+                        Text(if (isRefreshing) "Actualizando..." else "Actualizar")
                     }
                 }
-                
+
                 // Gráfico de barras
                 Card(
                     modifier = Modifier
@@ -207,14 +231,14 @@ fun ReporteProductosDialog(
                                 )
                             }
                         }
-                        
+
                         Spacer(modifier = Modifier.height(16.dp))
-                        
+
                         // Gráfico de barras con productos filtrados
                         BarChartProductos(productos = productosFiltrados)
                     }
                 }
-                
+
                 // Gráfico de torta
                 Card(
                     modifier = Modifier
@@ -236,16 +260,11 @@ fun ReporteProductosDialog(
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
                             )
-                            Text(
-                                text = "≈ $porcentajeDestacado%",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Gray
-                            )
+
                         }
-                        
+
                         Spacer(modifier = Modifier.height(8.dp))
-                        
+
                         // Etiqueta de estadísticas
                         Column(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -278,7 +297,7 @@ fun ReporteProductosDialog(
                                     )
                                 }
                             }
-                            
+
                             // Información de filtrado
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -308,7 +327,7 @@ fun ReporteProductosDialog(
                                     )
                                 }
                             }
-                            
+
                             // Mensaje si no hay inactivos
                             if (productosInactivos.isEmpty()) {
                                 Text(
@@ -320,14 +339,14 @@ fun ReporteProductosDialog(
                                 )
                             }
                         }
-                        
+
                         Spacer(modifier = Modifier.height(16.dp))
-                        
+
                         // Gráfico de torta con productos filtrados
                         PieChartProductos(productos = productosFiltrados)
-                        
+
                         Spacer(modifier = Modifier.height(16.dp))
-                        
+
                         // Información adicional
                         Text(
                             text = "📦 Análisis de inventario actual",
@@ -348,7 +367,7 @@ fun ReporteProductosDialog(
 fun BarChartProductos(productos: List<Producto>) {
     // Filtrar solo productos activos
     val productosActivos = productos.filter { it.activo }
-    
+
     if (productosActivos.isEmpty()) {
         Box(
             modifier = Modifier
@@ -362,7 +381,7 @@ fun BarChartProductos(productos: List<Producto>) {
         // Tomar los primeros 8 productos activos (ya vienen ordenados si se activó el filtro)
         val productosParaGrafico = productosActivos.take(8)
         val maxCantidad = productosParaGrafico.maxOfOrNull { it.cantidad } ?: 1
-        
+
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -382,7 +401,7 @@ fun BarChartProductos(productos: List<Producto>) {
                         verticalArrangement = Arrangement.Bottom
                     ) {
                         val barHeightPercentage = (producto.cantidad.toFloat() / maxCantidad)
-                        
+
                         Box(
                             modifier = Modifier
                                 .width(30.dp)
@@ -399,7 +418,7 @@ fun BarChartProductos(productos: List<Producto>) {
                     }
                 }
             }
-            
+
             // Etiquetas del eje X (nombres abreviados)
             Row(
                 modifier = Modifier
@@ -418,7 +437,7 @@ fun BarChartProductos(productos: List<Producto>) {
                     )
                 }
             }
-            
+
             // Mostrar cantidades
             Row(
                 modifier = Modifier
@@ -459,13 +478,13 @@ fun PieChartProductos(productos: List<Producto>) {
                 val productosActivos = productos.filter { it.activo == true }
                 val productosInactivos = productos.filter { it.activo == false }
                 val totalProductos = productos.size
-                
+
                 val activePercentage = if (totalProductos > 0) (productosActivos.size.toFloat() / totalProductos) else 0f
                 val inactivePercentage = if (totalProductos > 0) (productosInactivos.size.toFloat() / totalProductos) else 0f
-                
+
                 val totalStockActivos = productosActivos.sumOf { it.cantidad }
                 val totalStockInactivos = productosInactivos.sumOf { it.cantidad }
-                
+
                 Canvas(
                     modifier = Modifier
                         .size(180.dp)
@@ -473,9 +492,9 @@ fun PieChartProductos(productos: List<Producto>) {
                     val centerX = size.width / 2
                     val centerY = size.height / 2
                     val radius = size.minDimension / 2
-                    
+
                     var startAngle = -90f
-                    
+
                     // Dibujar siempre, incluso si es 100% activos o 100% inactivos
                     if (activePercentage > 0) {
                         // Segmento de productos activos (rojo)
@@ -490,7 +509,7 @@ fun PieChartProductos(productos: List<Producto>) {
                         )
                         startAngle += activeSweepAngle
                     }
-                    
+
                     if (inactivePercentage > 0) {
                         // Segmento de productos inactivos (gris oscuro)
                         val inactiveSweepAngle = 360f * inactivePercentage
@@ -503,7 +522,7 @@ fun PieChartProductos(productos: List<Producto>) {
                             size = Size(radius * 2, radius * 2)
                         )
                     }
-                    
+
                     // Círculo interior blanco para efecto de dona
                     drawCircle(
                         color = Color.White,
@@ -511,9 +530,9 @@ fun PieChartProductos(productos: List<Producto>) {
                         center = Offset(centerX, centerY)
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // Leyenda con cantidades reales
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -532,7 +551,7 @@ fun PieChartProductos(productos: List<Producto>) {
                             label = "Inactivos: ${String.format("%.1f", inactivePercentage * 100)}% (${productosInactivos.size} productos)"
                         )
                     }
-                    
+
                     // Mostrar stocks
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -550,7 +569,7 @@ fun PieChartProductos(productos: List<Producto>) {
                             fontWeight = FontWeight.Bold
                         )
                     }
-                    
+
                     // Mensaje de estado
                     if (productosInactivos.isEmpty()) {
                         Text(

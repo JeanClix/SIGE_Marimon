@@ -19,7 +19,7 @@ import org.marimon.sigc.model.ProductoCreate
 class ProductoViewModel : ViewModel() {
     val productos: SnapshotStateList<Producto> = mutableStateListOf()
 
-    fun cargarProductos() {
+    fun cargarProductos(onComplete: (() -> Unit)? = null) {
         viewModelScope.launch {
             try {
                 // CORREGIDO: Traer TODOS los productos (activos e inactivos) para que el reporte funcione correctamente
@@ -52,8 +52,10 @@ class ProductoViewModel : ViewModel() {
                         )
                     )
                 }
+                onComplete?.invoke()
             } catch (e: Exception) {
                 println("Error cargando productos: ${e.message}")
+                onComplete?.invoke()
             }
         }
     }
