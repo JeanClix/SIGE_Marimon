@@ -30,6 +30,13 @@ import kotlinx.coroutines.delay
 import org.marimon.sigc.Producto.ReporteProductosDialog
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import org.marimon.sigc.services.NotificationHelper
 
 @Preview
 @Composable
@@ -70,6 +77,7 @@ fun ProductoListScreen(
     todosLosProductos: List<Producto>, // TODOS los productos (activos e inactivos) para el reporte
     productoViewModel: ProductoViewModel
 ) {
+    val context = LocalContext.current
     var showDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var productoAEditar by remember { mutableStateOf<Producto?>(null) }
@@ -78,6 +86,68 @@ fun ProductoListScreen(
     var mensaje by remember { mutableStateOf("") }
     var mostrarMensaje by remember { mutableStateOf(false) }
     var showReporte by remember { mutableStateOf(false) }
+    var notificationPermissionGranted by remember { mutableStateOf(false) }
+    var checkNotifications by remember { mutableStateOf(0) }
+
+    // Función para verificar stock bajo
+    val verificarStockBajo = {
+        println("🔍 Verificando stock bajo...")
+        println("📦 Total productos: ${todosLosProductos.size}")
+        val productosStockBajo = todosLosProductos.filter { it.activo && it.cantidad <= 10 && it.cantidad > 0 }
+        println("⚠️ Productos con stock bajo (≤10): ${productosStockBajo.size}")
+        productosStockBajo.forEach {
+            println("   - ${it.nombre}: ${it.cantidad} unidades")
+        }
+
+        if (productosStockBajo.isNotEmpty()) {
+            val notificationHelper = NotificationHelper(context)
+            notificationHelper.verificarYNotificarStockBajo(todosLosProductos, umbralStock = 10)
+            println("✅ Notificaciones enviadas")
+        } else {
+            println("ℹ️ No hay productos con stock bajo")
+        }
+    }
+
+    // Launcher para solicitar permiso de notificaciones
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        println("🔔 Permiso de notificaciones: ${if (isGranted) "CONCEDIDO" else "DENEGADO"}")
+        notificationPermissionGranted = isGranted
+        if (isGranted) {
+            verificarStockBajo()
+        }
+    }
+
+    // Verificar y solicitar permiso de notificaciones (Android 13+)
+    LaunchedEffect(todosLosProductos.size, checkNotifications) {
+        println("🚀 LaunchedEffect ejecutado - Productos: ${todosLosProductos.size}, Check: $checkNotifications")
+        if (todosLosProductos.isNotEmpty()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                val permissionStatus = ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                )
+                println("📱 Android ${Build.VERSION.SDK_INT} - Permiso: ${if (permissionStatus == PackageManager.PERMISSION_GRANTED) "CONCEDIDO" else "NO CONCEDIDO"}")
+
+                when (permissionStatus) {
+                    PackageManager.PERMISSION_GRANTED -> {
+                        notificationPermissionGranted = true
+                        verificarStockBajo()
+                    }
+                    else -> {
+                        println("📲 Solicitando permiso de notificaciones...")
+                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
+            } else {
+                // Para versiones anteriores a Android 13, no se necesita permiso en tiempo de ejecución
+                println("📱 Android ${Build.VERSION.SDK_INT} - No requiere permiso en runtime")
+                notificationPermissionGranted = true
+                verificarStockBajo()
+            }
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -87,6 +157,22 @@ fun ProductoListScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Botón de prueba de notificaciones
+            Button(
+                onClick = {
+                    checkNotifications++
+                    if (!notificationPermissionGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    } else {
+                        verificarStockBajo()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800))
+            ) {
+                Text("🔔 Mandar Notificacion de Stock al Equipo", color = Color.White)
+            }
+
             Button(
                 onClick = { showReporte = true },
                 modifier = Modifier.fillMaxWidth(),
@@ -251,6 +337,8 @@ fun ProductoListScreen(
                             showDialog = false
                             mensaje = "✅ Producto creado exitosamente"
                             mostrarMensaje = true
+                            // Verificar stock bajo después de crear
+                            checkNotifications++
                         },
                         onError = { error ->
                             mensaje = "❌ Error: $error"
@@ -277,6 +365,8 @@ fun ProductoListScreen(
                             productoAEditar = null
                             mensaje = "✅ Producto actualizado exitosamente"
                             mostrarMensaje = true
+                            // Verificar stock bajo después de editar
+                            checkNotifications++
                         },
                         onError = { error ->
                             mensaje = "❌ Error: $error"
@@ -308,6 +398,8 @@ fun ProductoListScreen(
                                     productoAEliminar = null
                                     mensaje = "✅ Producto eliminado exitosamente"
                                     mostrarMensaje = true
+                                    // Verificar stock bajo después de eliminar
+                                    checkNotifications++
                                 },
                                 onError = { error ->
                                     mensaje = "❌ Error: $error"
@@ -363,6 +455,8 @@ fun ProductoListScreen(
                     // Recargar los productos desde la base de datos
                     productoViewModel.cargarProductos {
                         onComplete()
+                        // Verificar stock bajo después de actualizar
+                        checkNotifications++
                     }
                 }
             )
