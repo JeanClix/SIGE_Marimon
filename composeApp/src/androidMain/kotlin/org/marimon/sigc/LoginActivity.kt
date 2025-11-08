@@ -21,10 +21,10 @@ import org.marimon.sigc.viewmodel.AuthViewModel
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         // Inicializar el servicio de PDF
         PDFServiceManager.initialize(PDFService(this))
-        
+
         setContent {
             MaterialTheme {
                 val authViewModel = remember { AuthViewModel() }
@@ -46,6 +46,11 @@ class LoginActivity : ComponentActivity() {
                             authViewModel = authViewModel,
                             onLoginSuccess = {
                                 // La navegación se maneja automáticamente por el estado
+                            },
+                            onForgotPassword = {
+                                // Navegar a RecuperacionPasswordActivity
+                                val intent = Intent(this@LoginActivity, RecuperacionPasswordActivity::class.java)
+                                startActivity(intent)
                             }
                         )
                     }

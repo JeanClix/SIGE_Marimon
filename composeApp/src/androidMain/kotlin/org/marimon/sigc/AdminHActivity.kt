@@ -18,7 +18,7 @@ import androidx.compose.foundation.clickable
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         setContent {
             NavigationHost()
         }
@@ -56,7 +56,7 @@ fun PanelAdministrativo(onNavigate: (String) -> Unit = {}) {
 
             val items = listOf(
                 PanelItem("Registro de empleados", R.drawable.r_empleado, Routes.EMPLOYEES),
-                PanelItem("Reporte de Ventas", R.drawable.r_ventas, Routes.HOME), // Temporalmente va a home
+                PanelItem("Reporte de Ventas", R.drawable.r_ventas, Routes.VENTAS),
                 PanelItem("Reporte de Productos", R.drawable.r_producto, Routes.PRODUCTS),
                 PanelItem("Dashboard KPI", R.drawable.kpi, Routes.KPI)
             )
